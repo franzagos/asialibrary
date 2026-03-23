@@ -49,6 +49,11 @@ Use this to decide which files to read for a given task. **Don't load everything
 - `src/components/` — app-level components
 - `src/app/globals.css` — theme + Tailwind setup
 
+### E2E Testing
+- `playwright.config.ts` — Playwright config (baseURL, browser, webServer)
+- `e2e/` — all E2E test files (one file per feature area)
+- Run via `/test-e2e` command or `pnpm test:e2e` directly
+
 ## Critical Rules
 
 ### 1. Always run checks after changes
@@ -147,6 +152,33 @@ await deleteFile(result.url);
 - Input validation (via `parseBody` with a Zod schema)
 - Proper error responses (via `apiError`)
 
+### 10. Reuse components — don't reinvent them
+Before writing any UI, check what already exists:
+1. **shadcn/ui first** — if a component exists in `src/components/ui/`, use it. Install missing ones with `pnpm dlx shadcn@latest add <name>` rather than building from scratch.
+2. **App components second** — check `src/components/` for existing app-level components before creating new ones.
+3. **Extract, don't duplicate** — if the same UI pattern appears more than once, extract it into a reusable component in `src/components/`.
+4. **Extend, don't fork** — if an existing component almost fits, add a prop to it. Don't copy-paste and modify.
+
+Writing the same UI twice is always wrong. A new `<div>` where a `<Button>` or `<Card>` would do is always wrong.
+
+### 11. Write efficient database queries
+Every query has a cost. Follow these rules on every feature:
+
+- **Select only what you need** — never `db.select().from(table)` when you only need 2 fields:
+  ```typescript
+  // Bad
+  const users = await db.select().from(usersTable).where(eq(usersTable.id, id));
+  // Good
+  const users = await db.select({ id: usersTable.id, name: usersTable.name }).from(usersTable).where(eq(usersTable.id, id));
+  ```
+- **Always paginate** — any query that returns a list must have `.limit()`. Default max: 50 rows.
+- **No queries inside loops** — never query in a `for` loop. Use a single query with `.where(inArray(...))` instead.
+- **Add indexes for filter columns** — any column used in `.where()` or `.orderBy()` that isn't a primary key needs an index in `schema.ts`:
+  ```typescript
+  export const posts = pgTable("posts", { ... }, (t) => [index("posts_user_id_idx").on(t.userId)]);
+  ```
+- **Use transactions for multi-step writes** — if two or more inserts/updates must succeed together, wrap them in `db.transaction()`.
+
 ## Available Scripts
 
 ```bash
@@ -175,3 +207,38 @@ When implementing a task, follow this loading strategy:
 6. **Skip**: `node_modules/`, `drizzle/` (migrations), `.next/`, `pnpm-lock.yaml`
 
 This prevents context window waste on large projects.
+
+## How to Handle Build Requests
+
+When the user describes something to build, ask yourself: **would this feature deserve its own page in the app's documentation?**
+
+- **No** → implement directly in this context. Bug fixes, styling tweaks, adding a button to an existing page, extending an existing feature with a small enhancement — just do it.
+- **Yes** → it introduces a new capability to the app (new entities, new user flows, new screens). Create a spec first, then build via sub-agents.
+- **Ambiguous** → check what already exists in the codebase (routes, schema, components) and ask the user: "This touches X — do you want me to spec it or just handle it?"
+
+### Without spec: implement directly following all rules above.
+
+### With spec:
+
+**Building a new app from scratch:**
+1. Read `.claude/commands/starter-prompt.md` and follow it — interview the user, generate all spec files + `docs/business/starter-prompt.md`, then build everything automatically.
+
+**Adding a feature to an existing app:**
+1. Read `.claude/commands/create-spec.md` and follow it — interview the user, run research agents, generate the spec. Stop after the user confirms the plan.
+2. Then read `.claude/commands/continue-feature.md` and follow it — it loops automatically until all tasks are complete.
+
+### Feature Documentation Rule
+
+`docs/features/` is a living map of the app — not a build log. Keep it current on every change:
+- **New capability built via spec**: the Final Report in continue-feature creates the doc automatically.
+- **Extending an existing capability** (no spec): after implementing, update the existing `docs/features/{feature-name}.md` to reflect the change.
+- **Feature removed**: delete the corresponding `docs/features/{feature-name}.md`.
+- **Quick fix / bug fix**: no doc update needed unless the fix changes user-facing behavior.
+
+### README Rule
+
+`README.md` is always the **state-of-the-art document** of the application. It must describe what the app IS, not what it was scaffolded from.
+
+- **After the first build** (via `/starter-prompt`): the README must be completely rewritten to describe the actual app — its purpose, features, setup instructions, and tech stack. All boilerplate references must be removed.
+- **After adding a feature**: update the README if the feature changes what the app does or how to set it up.
+- **Never reference the boilerplate** in a built app's README. The boilerplate is scaffolding — once the app exists, the scaffolding disappears.

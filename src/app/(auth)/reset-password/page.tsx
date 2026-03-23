@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { Loader2, ArrowLeft } from "lucide-react";
 
 export default function ResetPasswordPage() {
@@ -49,7 +49,7 @@ export default function ResetPasswordPage() {
 
     setLoading(true);
     try {
-      await signIn.resetPassword({ newPassword: password, token: token! });
+      await (authClient as any).resetPassword({ newPassword: password, token: token! });
       setSuccess(true);
       setTimeout(() => router.push("/login"), 2000);
     } catch {

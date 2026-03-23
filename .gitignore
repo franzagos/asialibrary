@@ -30,3 +30,9 @@ public/uploads/
 
 # turbopack
 .turbo
+
+# planning artifacts (ephemeral runtime state)
+.planning/
+
+# local Claude Code permissions (machine-specific)
+.claude/settings.local.json

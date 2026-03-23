@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { signIn } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { Loader2, ArrowLeft } from "lucide-react";
 
 export default function ForgotPasswordPage() {
@@ -17,7 +17,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      await signIn.forgetPassword({ email, redirectTo: "/reset-password" });
+      await (authClient as any).requestPasswordReset({ email, redirectTo: "/reset-password" });
       setSent(true);
     } catch {
       setError("Something went wrong. Please try again.");

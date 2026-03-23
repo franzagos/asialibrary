@@ -13,7 +13,7 @@ interface RateLimitEntry {
   resetAt: number; // Unix timestamp in ms
 }
 
-interface RateLimitConfig {
+export interface RateLimitConfig {
   /** Maximum requests allowed in the window */
   maxRequests: number;
   /** Time window in seconds */

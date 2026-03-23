@@ -1,275 +1,332 @@
-# Simo's Agentic Coding Boilerplate
+# Crea webapp come Simo
 
-**Create webapps like Simo** — a production-ready Next.js boilerplate built for AI-assisted development with Claude Code.
-
-## What is this?
-
-A starter kit for building real web applications using AI as your coding partner. Instead of writing every line yourself, you describe what you want, and Claude Code builds it — using the patterns, security, and architecture already baked into this boilerplate.
-
-**This is not a demo app.** It's the foundation you build _your_ app on.
-
-### What's included
-
-- **Authentication** — email/password + Google OAuth (via Better Auth)
-- **Database** — PostgreSQL with Drizzle ORM, Docker for local dev
-- **AI integration** — OpenRouter (100+ models through one API key)
-- **File storage** — local in dev, Vercel Blob in production
-- **Security** — rate limiting, input validation, security headers, auth guards
-- **Setup wizard** — interactive checklist that validates your configuration
-- **Claude Code commands** — slash commands for spec creation, GitHub integration, and phased development
-
-### Tech stack
-
-Next.js 16 · React 19 · TypeScript 5.9 · Tailwind CSS 4 · shadcn/ui · Drizzle ORM · PostgreSQL · Better Auth · Vercel AI SDK · OpenRouter
+Un template Next.js per costruire web app moderne con Claude Code, con una struttura guidata che ti permette di lavorare con gli stessi strumenti dei developer senza dover partire da zero.
 
 ---
 
-## Quick Start
+## Perché ho creato questo template
 
-### Prerequisites
+Tool come Lovable, Replit e ambienti simili sono ottimi per iniziare. Permettono di costruire applicazioni velocemente e abbassano molto la barriera di ingresso.
 
-- [Node.js 20+](https://nodejs.org)
-- [pnpm](https://pnpm.io) (`npm install -g pnpm`)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop) (for the local database)
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (for AI-assisted development)
+Il problema è che spesso ti ritrovi a costruire cose da developer senza capire davvero cosa sta succedendo sotto il cofano. Il codice esiste, ma non è davvero tuo. Non sai bene come è organizzato, non sai come ottimizzarlo, e non sai come intervenire quando vuoi fare qualcosa di più avanzato.
 
-### Setup
+Questo boilerplate nasce per fare un passaggio preciso: passare da tool come Lovable o Replit a costruire applicazioni con gli stessi strumenti dei developer, ma con una guida chiara. Non devi partire da zero, non devi affrontare da solo la complessità. Puoi costruire quello che vuoi, capendo cosa sta succedendo e mantenendo il controllo su ogni passaggio.
+
+---
+
+## Per chi è
+
+- Hai iniziato con tool come Lovable o Replit
+- Vuoi costruire applicazioni web reali
+- Vuoi capire meglio cosa succede dietro al codice
+- Vuoi avere più controllo sul tuo software
+- Vuoi lavorare con strumenti da developer senza sentirti completamente perso
+
+---
+
+## Cosa include
+
+Autenticazione, database, AI, UI e sicurezza sono già configurati. Parti subito a costruire le feature.
+
+| | |
+|---|---|
+| **Auth** | Email/password + Google OAuth |
+| **Database** | PostgreSQL + Drizzle ORM |
+| **AI** | 100+ modelli via OpenRouter |
+| **UI** | shadcn/ui + Tailwind 4 + dark mode |
+| **Sicurezza** | Rate limiting, CSP, validazione input, path traversal protection |
+| **Storage** | Locale in dev, Vercel Blob in produzione |
+| **Test** | Playwright E2E |
+
+---
+
+## Prerequisiti (una tantum)
+
+Questi strumenti vanno installati **una sola volta**. Una volta completato questo setup, non dovrai più rifarlo — né per questo progetto né per quelli futuri.
+
+> **Come funziona il terminale**: incolli un comando, premi `Invio`, e aspetti. Sai che ha finito quando ricompare la riga con il tuo nome utente (es. `mario@MacBook %`). A quel punto puoi incollare il comando successivo. Non serve aprire un nuovo terminale tra un comando e l'altro, a meno che non sia indicato esplicitamente.
+
+> **Windows**: questo template è pensato per Mac. Su Windows, installa prima [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install) (Ubuntu), poi segui le istruzioni Linux dentro WSL.
+
+### 1. Apri il Terminale
+
+Premi `Cmd + Spazio`, scrivi **Terminale**, premi `Invio`. Si apre una finestra con sfondo scuro e testo bianco — è qui che eseguirai tutti i comandi.
+
+### 2. Homebrew
+
+**Cos'è**: il "negozio" che ti permette di installare programmi da terminale con un solo comando. Senza Homebrew dovresti scaricare ogni tool manualmente.
+
+Incolla questo comando e premi `Invio`:
 
 ```bash
-# 1. Clone and install
-git clone <your-repo-url> my-app
-cd my-app
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+- Ti chiederà la **password del Mac** — quando la scrivi non vedrai niente a schermo (nemmeno puntini). È normale, scrivi e premi `Invio`.
+- L'installazione può durare **5–10 minuti**. Vedrai molto testo scorrere. Aspetta finché non ricompare la riga con il tuo nome utente.
+- **Importante**: alla fine Homebrew potrebbe mostrarti 2 righe da copiare sotto la scritta `==> Next steps`. Se le vedi, copiale e incollale nel terminale una alla volta. Servono per attivare Homebrew.
+
+**Come sai che ha funzionato**: chiudi il terminale, riaprilo, e scrivi `brew --version`. Se vedi un numero di versione, è tutto ok.
+
+### 3. Git
+
+**Cos'è**: il sistema che salva la cronologia del tuo codice. Ogni modifica viene registrata, e puoi sempre tornare a una versione precedente.
+
+```bash
+brew install git
+```
+
+Durata: circa 1 minuto. **Fatto quando**: ricompare la riga col tuo nome utente. Verifica con `git --version`.
+
+### 4. Node.js
+
+**Cos'è**: il motore che esegue il codice della tua app. Senza Node.js, il computer non sa come leggere il codice che scrivi.
+
+```bash
+brew install node
+```
+
+Durata: circa 2 minuti. **Fatto quando**: ricompare la riga col tuo nome utente. Verifica con `node --version` — deve mostrare v18 o superiore.
+
+### 5. pnpm
+
+**Cos'è**: il gestore delle librerie. La tua app usa centinaia di pezzi di codice scritti da altri (pulsanti, connessione al database, ecc.). pnpm li scarica e li tiene aggiornati.
+
+```bash
+sudo npm install -g pnpm
+```
+
+Ti chiederà la password del Mac (come per Homebrew, non vedrai niente mentre scrivi). Durata: pochi secondi. Verifica con `pnpm --version`.
+
+### 6. Docker Desktop
+
+**Cos'è**: Docker fa girare un database sul tuo computer senza che tu debba installare o configurare PostgreSQL manualmente. Pensalo come una "scatola" che contiene il database già pronto.
+
+Questo è l'unico strumento che **non** si installa da terminale:
+
+1. Vai su [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/)
+2. Scarica la versione per il tuo Mac (Apple Silicon o Intel — se non sai quale hai: menu Mela → Informazioni su questo Mac)
+3. Apri il file `.dmg`, trascina Docker nella cartella Applicazioni
+4. Apri Docker Desktop dalle Applicazioni. La prima volta chiede dei permessi — accetta tutto
+
+**Importante**: Docker Desktop deve essere **aperto e in esecuzione** ogni volta che lavori al progetto. Vedrai un'icona di balena nella barra in alto del Mac.
+
+Verifica nel terminale: `docker --version`
+
+### 7. Visual Studio Code
+
+**Cos'è**: l'editor dove vedrai e modificherai il codice. È gratuito ed è lo standard usato dalla maggior parte dei developer.
+
+1. Vai su [code.visualstudio.com](https://code.visualstudio.com/)
+2. Scarica, apri il `.dmg`, trascina nella cartella Applicazioni
+3. Apri VS Code
+
+**Installa l'estensione Claude Code**:
+
+4. Clicca l'icona dei quadratini nella barra laterale sinistra (oppure premi `Cmd + Shift + X`)
+5. Cerca **"Claude Code"** nella barra di ricerca
+6. Clicca **Install** sull'estensione di Anthropic
+
+**Il terminale dentro VS Code**:
+
+VS Code ha un terminale integrato — funziona esattamente come il Terminale del Mac, ma è comodo perché resta dentro l'editor senza dover cambiare finestra.
+
+7. Apri il terminale integrato: menu **Terminal → New Terminal** (oppure `` Ctrl + ` ``)
+
+Da questo momento puoi usare questo terminale per tutti i comandi del progetto. Non serve più quello del Mac.
+
+### 8. Claude Code
+
+**Cos'è**: l'AI che costruirà la tua app insieme a te. Tu descrivi cosa vuoi, Claude scrive il codice.
+
+Serve uno di questi: un piano [Anthropic Max o Pro](https://claude.ai), una [API key Anthropic](https://console.anthropic.com/), oppure un accesso tramite team o azienda.
+
+Nel terminale di VS Code:
+
+```bash
+sudo npm install -g @anthropic-ai/claude-code
+```
+
+Durata: circa 30 secondi. Verifica con `claude --version`.
+
+---
+
+> **Qualcosa non funziona?** Se un comando dà errore, copia l'intero messaggio di errore e incollalo su [claude.ai](https://claude.ai) (o ChatGPT) con questo prompt:
+>
+> *"Sto configurando un progetto Node.js su Mac. Ho eseguito questo comando: `[incolla il comando]` e ho ottenuto questo errore: `[incolla l'errore]`. Mi guidi passo passo per risolverlo?"*
+>
+> Funziona per qualsiasi errore in questa guida. Non serve capire l'errore — basta copiarlo.
+
+> **Tutto installato?** Questi 8 passaggi non dovrai più ripeterli. Da qui in poi, ogni volta che vuoi lavorare al progetto ti basta aprire il terminale e Docker Desktop.
+
+---
+
+## Come iniziare
+
+Questi passaggi creano il tuo progetto e aprono una guida interattiva che ti accompagna nel resto della configurazione. Eseguili nel terminale di VS Code, uno alla volta.
+
+### 1. Crea la cartella del progetto
+
+Crea una cartella sul tuo computer dove terrai tutti i progetti web — ad esempio sul Desktop:
+
+1. Apri il **Finder**
+2. Vai sul **Desktop** (o dove preferisci)
+3. Crea una nuova cartella chiamata **Progetti** (se non ce l'hai già)
+4. Dentro **Progetti**, crea un'altra cartella con il nome della tua app (es. `la-mia-app`)
+
+### 2. Apri la cartella in VS Code
+
+1. Apri **VS Code**
+2. **File → Open Folder** → seleziona la cartella che hai appena creato (es. `la-mia-app`)
+3. Apri il terminale integrato: **Terminal → New Terminal**
+
+### 3. Clona il template
+
+Nel terminale di VS Code, incolla:
+
+```bash
+git clone https://github.com/simomagazzu/create-app-like-simo.git .
+```
+
+Questo scarica tutto il codice del template dentro la cartella che hai aperto. Il punto `.` alla fine è importante — dice a Git di scaricare qui, non in una sotto-cartella.
+
+### 4. Installa le dipendenze
+
+```bash
 pnpm install
+```
 
-# 2. Configure environment
+Scarica tutte le librerie che il progetto usa. Durata: 1–2 minuti. Vedrai molto testo — è normale. Aspetta finché non ricompare la riga col tuo nome utente.
+
+### 5. Crea il file di configurazione
+
+```bash
 cp env.example .env
-# Edit .env — follow the comments in the file
+```
 
-# 3. Start the database
+Questo copia un file di esempio con tutte le impostazioni della tua app. Senza questo file il server non parte. Non vedrai nessun output — è normale, il comando funziona in silenzio.
+
+### 6. Avvia Docker Desktop
+
+Apri **Docker Desktop** dalle Applicazioni (l'hai installato nei prerequisiti). Aspetta che l'icona della balena nella barra in alto smetta di animarsi — significa che Docker è pronto.
+
+### 7. Avvia il database
+
+```bash
 docker compose up -d
+```
 
-# 4. Create database tables
+Questo crea un database PostgreSQL sul tuo computer. Durata: la prima volta può richiedere 1–2 minuti (scarica i file necessari), le volte successive pochi secondi.
+
+```bash
 pnpm run db:migrate
+```
 
-# 5. Start the dev server
+Questo crea le tabelle nel database. Vedrai delle righe con i nomi delle tabelle create.
+
+### 8. Avvia il server
+
+```bash
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — you'll see the **setup wizard** that walks you through the remaining configuration.
+Dopo qualche secondo vedrai un messaggio con `http://localhost:3000`. Apri quel link nel browser.
 
-### Start building
+**Trovi una guida interattiva** che ti accompagna nei passaggi rimanenti: generare la chiave segreta, configurare l'autenticazione, scegliere se usare l'AI, e collegare il repo a GitHub. Ogni step ha i comandi già pronti da copiare.
 
-Once the setup wizard shows green checkmarks:
+> **Il server deve restare attivo.** Finché lavori al progetto, lascia il terminale con `pnpm dev` aperto. Per fermarlo: `Ctrl+C`. Per i comandi successivi, apri un **secondo terminale** in VS Code: **Terminal → New Terminal**.
+
+### 9. Quando la guida è completa
+
+Tutti i check obbligatori sono verdi? Apri un nuovo terminale e scrivi:
 
 ```bash
-# Open Claude Code
 claude
-
-# Describe what you want to build
-/create-spec
 ```
 
-Claude Code will interview you about your app, create a detailed spec, and then you can use `/continue-feature` to build it phase by phase.
+Claude Code si apre nel terminale. Scrivi `/starter-prompt` per iniziare a costruire la tua app.
 
 ---
 
-## Project Structure
+## Il problema che questo template risolve in più
 
-```
-├── .claude/commands/       # Claude Code slash commands
-│   ├── create-spec.md      # Interview → spec creation
-│   ├── publish-to-github.md # Spec → GitHub issues + project board
-│   ├── continue-feature.md  # Pick up next task and implement
-│   ├── checkpoint.md        # Create a detailed commit
-│   ├── review-pr.md         # Security + quality PR review
-│   └── deploy-check.md      # Pre-deployment validation
-├── src/
-│   ├── app/                 # Next.js App Router pages
-│   │   ├── (auth)/          # Login, register, password reset
-│   │   ├── api/             # API routes (auth, health)
-│   │   ├── dashboard/       # Protected dashboard
-│   │   └── profile/         # User profile
-│   ├── components/          # React components
-│   │   ├── auth/            # Authentication forms
-│   │   └── ui/              # shadcn/ui components (add as needed)
-│   ├── hooks/               # Custom React hooks
-│   └── lib/                 # Core libraries
-│       ├── api-utils.ts     # API response helpers, auth/validation wrappers
-│       ├── auth.ts          # Better Auth server config
-│       ├── auth-client.ts   # Client-side auth hooks
-│       ├── db.ts            # Database connection
-│       ├── env.ts           # Environment validation + setup status
-│       ├── logger.ts        # Structured logging
-│       ├── rate-limit.ts    # Rate limiter (in-memory, per-route)
-│       ├── schema.ts        # Database schema (Drizzle)
-│       ├── session.ts       # Server-side session helpers
-│       ├── storage.ts       # File upload/delete abstraction
-│       └── utils.ts         # Utility functions
-├── CLAUDE.md                # AI assistant guidelines
-├── docker-compose.yml       # Local PostgreSQL
-├── env.example              # Environment template with docs
-└── package.json
-```
+Quando inizi a costruire con Claude Code, funziona benissimo. Il problema arriva dopo: più la sessione va avanti, più Claude perde il filo. Inizia a scrivere codice che contraddice quello di prima, fa refactor inutili, introduce bug che non c'erano.
+
+Questo succede perché Claude accumula troppo contesto in una sola sessione — come se dovessi ricordare ogni singola cosa che hai detto in una conversazione di ore.
+
+Questo template risolve il problema alla radice. Ogni task viene gestito in isolamento, con un contesto pulito. Claude rimane preciso e consistente dall'inizio alla fine del progetto, anche quando il codice cresce.
 
 ---
 
-## Claude Code Workflow
+## Il flusso di sviluppo
 
-This boilerplate is designed around a specific development workflow:
+### Costruire una nuova app
 
-### 1. Plan: `/create-spec`
-Claude interviews you about what you want to build, then generates a structured spec with requirements, implementation plan, and architecture decisions.
+Scrivi `/starter-prompt` dentro Claude Code. Claude ti fa una serie di domande: cosa vuoi costruire, chi lo usa, quali feature, che design vuoi. Poi esplora il codice esistente, crea un piano dettagliato, e inizia a costruire tutto in automatico — una fase alla volta, ognuna in isolamento con un contesto pulito.
 
-### 2. Publish: `/publish-to-github`
-Creates GitHub Issues for each phase and task, sets up a Project board, and caches all the IDs for fast subsequent operations.
+Al termine ti ritrovi con la tua app funzionante. Rivedi le modifiche, committi quando sei soddisfatto.
 
-### 3. Build: `/continue-feature`
-Finds the next task, loads only the relevant context (not the whole codebase), implements it, validates with lint/typecheck, commits, and updates GitHub tracking. Run it repeatedly until done.
+### Aggiungere una feature
 
-### 4. Save: `/checkpoint`
-Creates a well-structured commit with detailed change descriptions.
+Scrivi `/create-spec`. Claude ti intervista sulla feature, poi genera una spec dettagliata con tutte le decisioni tecniche. Quando la spec è pronta, scrivi `/continue-feature` per costruire tutto in automatico.
 
-### 5. Review: `/review-pr`
-Runs a security + quality review on pull requests, checking for missing auth guards, rate limits, input validation, and more.
+### Modifiche semplici
 
-### 6. Ship: `/deploy-check`
-Pre-deployment validation — checks env vars, database connectivity, build success, and security configuration.
+Per bug, testi, stili, piccole correzioni — descrivi direttamente cosa vuoi. Claude lo fa senza bisogno di spec.
+
+### Prima del deploy
+
+`/deploy-check` — checklist completa: sicurezza, performance, variabili d'ambiente. Ti dice se sei pronto.
 
 ---
 
-## Configuration Guide
+## Deploy
 
-### Database
-
-**Development** (Docker — runs on your machine):
-```bash
-docker compose up -d                    # Start PostgreSQL
-pnpm run db:migrate                     # Apply migrations
-pnpm run db:studio                      # Open database GUI
-docker compose down                     # Stop
-docker compose down -v                  # Stop + delete all data
-```
-
-**Production** (Neon — free tier available):
-1. Create a project at [neon.tech](https://neon.tech)
-2. Copy the connection string
-3. Set it as `POSTGRES_URL` in your production environment
-
-### Authentication
-
-**Email/password** works out of the box. Verification and password reset emails are logged to your terminal during development. For production, integrate an email provider (Resend, SendGrid, etc.) in `src/lib/auth.ts`.
-
-**Google OAuth** (optional):
-1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-2. Create OAuth 2.0 credentials
-3. Set redirect URI to `http://localhost:3000/api/auth/callback/google`
-4. Add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to `.env`
-
-### AI Integration
-
-1. Get an API key from [OpenRouter](https://openrouter.ai/settings/keys)
-2. Add it as `OPENROUTER_API_KEY` in `.env`
-3. Browse models at [openrouter.ai/models](https://openrouter.ai/models)
-4. Set your preferred model as `OPENROUTER_MODEL` (default: `openai/gpt-4.1-mini`)
-
-### File Storage
-
-- **Development**: Files save to `public/uploads/` (gitignored)
-- **Production**: Set `BLOB_READ_WRITE_TOKEN` from Vercel Dashboard → Storage → Blob
+1. Push su GitHub
+2. Importa su [Vercel](https://vercel.com)
+3. Aggiungi le variabili d'ambiente di produzione
+4. Database in produzione: [Neon](https://neon.tech) ha un tier gratuito
 
 ---
 
-## API Patterns
+## Supporto
 
-Every API route in this project follows the same structure. This makes them predictable and secure:
-
-```typescript
-import { apiResponse, apiError, requireApiAuth, applyRateLimit, parseBody } from "@/lib/api-utils";
-import { RATE_LIMITS } from "@/lib/rate-limit";
-import { z } from "zod";
-
-const mySchema = z.object({
-  name: z.string().min(1).max(100),
-});
-
-export async function POST(req: Request) {
-  // 1. Rate limit
-  const limited = await applyRateLimit("my-route", RATE_LIMITS.api);
-  if (limited) return limited;
-
-  // 2. Auth
-  const { session, error } = await requireApiAuth();
-  if (error) return error;
-
-  // 3. Validate
-  const { data, error: parseErr } = await parseBody(req, mySchema);
-  if (parseErr) return parseErr;
-
-  // 4. Do work
-  return apiResponse({ result: "ok" });
-}
-```
+Hai problemi con il setup o domande sul progetto? Scrivimi.
 
 ---
 
-## Adding shadcn/ui Components
+<details>
+<summary>Riferimento tecnico (per developer)</summary>
 
-```bash
-pnpm dlx shadcn@latest add button
-pnpm dlx shadcn@latest add input
-pnpm dlx shadcn@latest add card
-# etc.
-```
+**Stack completo**: Next.js 16, React 19, TypeScript 5.9, Better Auth, PostgreSQL + Drizzle ORM, Vercel AI SDK 5 + OpenRouter, shadcn/ui, Tailwind 4, Playwright
 
-Components install to `src/components/ui/`. They're pre-configured for dark mode and the project's theme.
+**Script utili**:
 
----
+| Comando | |
+|---|---|
+| `pnpm dev` | Server locale (Turbopack) |
+| `pnpm check` | lint + typecheck |
+| `pnpm db:generate` | Genera migrazioni dopo modifiche allo schema |
+| `pnpm db:migrate` | Applica le migrazioni |
+| `pnpm db:studio` | GUI database |
+| `pnpm db:reset` | Svuota e ricrea le tabelle |
+| `pnpm test:e2e` | Test E2E headless |
+| `pnpm test:e2e:ui` | Playwright UI interattiva |
 
-## Scripts
+**Comandi Claude Code**:
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start dev server (Turbopack) |
-| `pnpm build` | Production build (runs migrations first) |
-| `pnpm lint` | Run ESLint |
-| `pnpm typecheck` | Run TypeScript checking |
-| `pnpm check` | Run both lint + typecheck |
-| `pnpm db:generate` | Generate migration files |
-| `pnpm db:migrate` | Apply migrations |
-| `pnpm db:push` | Push schema directly (dev shortcut) |
-| `pnpm db:studio` | Open Drizzle Studio |
-| `pnpm db:reset` | Drop and recreate tables |
+| Comando | |
+|---|---|
+| `/starter-prompt` | Costruisce una nuova app da zero (intervista → spec → build automatica) |
+| `/create-spec` | Crea la spec per una nuova feature |
+| `/continue-feature` | Esegue tutti i task della spec in automatico |
+| `/security-audit` | Scansione di sicurezza completa con report e fix automatici |
+| `/deploy-check` | Verifica che tutto sia pronto per il deploy |
 
----
+**Architettura multi-agente**: ogni task viene eseguito da un sotto-agente con contesto fresco (200k token). L'orchestratore legge solo la spec e coordina. La direzione di design viene estratta dai requisiti e iniettata in ogni brief UI. La qualità rimane costante anche su sessioni lunghe.
 
-## Deployment
+*Ispirato dall'[Agentic Coding Starter Kit di Leon van Zyl](https://github.com/leonvanzyl/agentic-coding-starter-kit).*
 
-### Vercel (recommended)
+</details>
 
-1. Push to GitHub
-2. Import in [Vercel](https://vercel.com)
-3. Add environment variables (from `.env`, using production values)
-4. Deploy
-
-The `pnpm build` script runs `db:migrate` automatically before building.
-
-### Pre-deployment checklist
-
-Run `/deploy-check` in Claude Code, or manually verify:
-- [ ] `BETTER_AUTH_SECRET` is a real random string (not the default)
-- [ ] `POSTGRES_URL` points to your production database
-- [ ] `NEXT_PUBLIC_APP_URL` is your real domain
-- [ ] `pnpm build` completes without errors
-- [ ] Email provider configured (if using email auth)
-
----
-
-## Inspired by
-
-This project is inspired by [Leon van Zyl's Agentic Coding Starter Kit](https://github.com/leonvanzyl/agentic-coding-starter-kit). Built with a focus on guided onboarding, security-first architecture, and optimized Claude Code workflows.
-
----
-
-## License
-
-MIT
+MIT License

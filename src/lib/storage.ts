@@ -96,6 +96,11 @@ export async function deleteFile(url: string): Promise<void> {
     return;
   }
   const pathname = url.replace(/^\/uploads\//, "");
-  const filepath = join(process.cwd(), "public", "uploads", pathname);
+  const uploadsRoot = join(process.cwd(), "public", "uploads");
+  const filepath = join(uploadsRoot, pathname);
+  // Guard against path traversal — resolved path must stay inside uploads/
+  if (!filepath.startsWith(uploadsRoot + "/") && filepath !== uploadsRoot) {
+    throw new Error("Invalid file path");
+  }
   if (existsSync(filepath)) await unlink(filepath);
 }

@@ -76,6 +76,9 @@ export function getSetupStatus() {
       configured: Boolean(process.env.OPENROUTER_API_KEY),
       model: process.env.OPENROUTER_MODEL || "openai/gpt-4.1-mini",
     },
+    resend: {
+      configured: Boolean(process.env.RESEND_API_KEY),
+    },
     storage: {
       backend: process.env.BLOB_READ_WRITE_TOKEN ? "vercel-blob" : "local",
     },

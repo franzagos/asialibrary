@@ -6,7 +6,9 @@ export interface SetupStatus {
   database: { connected: boolean; configured: boolean };
   auth: { secretConfigured: boolean; googleOAuth: boolean };
   ai: { configured: boolean; model: string };
+  resend: { configured: boolean };
   storage: { backend: string };
+  github: { connected: boolean };
   environment: string;
 }
 
