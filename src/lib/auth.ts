@@ -7,18 +7,25 @@ import { invitation } from "./schema";
 import { eq, and, gt } from "drizzle-orm";
 
 async function sendEmail(to: string, subject: string, html: string) {
-  if (process.env.RESEND_API_KEY) {
+  const isDev = process.env.NODE_ENV !== "production";
+
+  if (process.env.RESEND_API_KEY && !isDev) {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL ?? "noreply@example.com",
       to,
       subject,
       html,
     });
+    if (result.error) {
+      console.error("[Resend error]", result.error);
+      throw new Error(result.error.message);
+    }
   } else {
+    // Dev: print to terminal so you can click the link directly
     const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
     console.log(
-      `\n${"=".repeat(60)}\n${subject}\nTo: ${to}\n${text}\n${"=".repeat(60)}\n`
+      `\n${"=".repeat(60)}\n📧 ${subject}\nTo: ${to}\n${text}\n${"=".repeat(60)}\n`
     );
   }
 }
