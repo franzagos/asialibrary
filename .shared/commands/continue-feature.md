@@ -1,33 +1,39 @@
 ---
-description: Run all feature tasks to completion via sub-agents
+description: Run all feature tasks to completion
 ---
 
 # Continue Feature
 
-Runs every task in the feature spec to completion without stopping. The orchestrator stays lean — reads the spec and coordinates. Sub-agents do all the actual work.
+Runs every task in the feature spec to completion. The orchestrator stays lean — reads the spec and coordinates. Tasks are executed either by parallel sub-agents (when the runtime supports them reliably) or sequentially in the main session (safe default).
+
+## Runtime capabilities
+
+This command works on any runtime. When an advanced capability is available (parallel sub-agents, `$ARGUMENTS` substitution, file-based polling) the command uses it; otherwise it falls back to a single-session sequential path. See `.shared/CAPABILITIES.md` for the full model.
 
 ## Step 1: Locate the Feature
 
-Look for the feature folder in `specs/{feature-name}/`. It should contain:
-- `requirements.md`
-- `implementation-plan.md`
+Identify the feature folder under `specs/{feature-name}/`. It must contain `requirements.md` and `implementation-plan.md`.
 
-If a feature name is passed in `$ARGUMENTS`, use it. If only one folder exists under `specs/`, use it. If multiple exist and no argument is provided, ask the user which feature to continue.
+Resolution order:
+1. If the runtime substituted `$ARGUMENTS` with a feature name, use it.
+2. Otherwise, if exactly one folder exists under `specs/`, use it.
+3. Otherwise, if exactly one folder has unchecked `- [ ]` tasks in its `implementation-plan.md`, use it.
+4. If still ambiguous, list the candidates and ask the user which to continue (one-line question).
 
 ## Step 2: Load Orchestrator Context (lean — no source files)
 
 Read only:
-1. `CLAUDE.md` — full text, will be embedded verbatim in sub-agent briefs
+1. `AGENTS.md` — full text, will be embedded verbatim in task briefs
 2. `specs/{feature-name}/requirements.md` — feature summary
 3. `specs/{feature-name}/implementation-plan.md` — task list
 
-**Never load in the orchestrator**: source files, `node_modules/`, `.next/`, `pnpm-lock.yaml`, `drizzle/meta/`. Source loading belongs in sub-agents.
+**Never load in the orchestrator**: source files, `node_modules/`, `.next/`, `pnpm-lock.yaml`, `drizzle/meta/`. Source loading belongs in the task brief.
 
 ## Step 3: Find the Next Wave
 
-1. Find the current phase: the first phase with any unchecked `- [ ]` tasks
-2. Find the current wave: the lowest wave number with unchecked tasks in that phase
-3. Collect ALL unchecked tasks with that wave number — these run in parallel
+1. Find the current phase: the first phase with any unchecked `- [ ]` tasks.
+2. Find the current wave: the lowest wave number with unchecked tasks in that phase.
+3. Collect ALL unchecked tasks with that wave number — these are independent of each other.
 
 For each task, extract:
 - `phase_number`, `phase_title`
@@ -40,11 +46,11 @@ For each task, extract:
 
 **If no unchecked tasks remain anywhere**: go to Final Report.
 
-**Package install conflict check**: if more than one task in the current wave involves running `pnpm add` or `pnpm dlx`, run those tasks sequentially (one at a time) to avoid package.json conflicts. All other same-wave tasks can run in parallel.
+**Package install conflict guard**: if more than one task in the current wave runs `pnpm add` or `pnpm dlx`, those tasks MUST run sequentially to avoid package.json conflicts — even in parallel mode.
 
-## Step 4: Build Sub-Agent Brief
+## Step 4: Build Task Brief
 
-For each task in the current wave, construct a fully self-contained prompt. Sub-agents start with zero prior context.
+For each task in the current wave, construct a fully self-contained prompt. A task brief is used whether the task runs as a sub-agent or inline.
 
 Build by concatenating these sections:
 
@@ -66,7 +72,7 @@ Wave: {wave_number}
 ```
 ## Project Conventions
 
-{paste the full text of CLAUDE.md verbatim — do not summarize, do not truncate}
+{paste the full text of AGENTS.md verbatim — do not summarize, do not truncate}
 ```
 
 ---
@@ -132,12 +138,12 @@ If the result looks like every other AI-generated UI — stop and apply the desi
 
 Execute in order:
 
-1. Load all files listed in Section 3 — read before writing anything
-2. If you encounter an unfamiliar library API, use Context7 to look up the latest docs before implementing
-3. Implement the task following all conventions in Section 2
-   — If this task includes UI: apply the UI Quality Standard from Section 5
+1. Load all files listed in Section 3 — read before writing anything.
+2. If you encounter an unfamiliar library API and a docs-lookup tool (e.g. Context7 MCP) is available, use it. Otherwise, work from the local code and the details in Section 4.
+3. Implement the task following all conventions in Section 2.
+   — If this task includes UI: apply the UI Quality Standard from Section 5.
 4. Run: pnpm lint && pnpm typecheck
-5. If lint/typecheck fails: fix automatically (up to 2 retries)
+5. If lint/typecheck fails: fix automatically (up to 2 retries).
    — If still failing after 2 retries: stop and return exactly:
      FAILED: {full error output}
 6. Do NOT run git add or git commit.
@@ -161,26 +167,60 @@ Execute in order:
 
 ---
 
-## Step 5: Spawn Sub-Agents
+## Step 5: Execute the Wave
 
-Spawn one background agent per task in the current wave, all at once. Use `run_in_background: true` for each.
+Decide execution mode based on what the runtime supports reliably:
 
-Print before spawning:
-```
-Phase {phase_number}: {phase_title} · Wave {wave_number} ({N} task(s))
-→ {task_1_description}
-→ {task_2_description}  (if applicable)
-```
+### Mode A — Parallel sub-agents (preferred when available)
 
-## Step 6: Wait for Results
+Use this mode only if the runtime supports spawning multiple background sub-agents that run concurrently. Examples: Claude Code's Task tool with `run_in_background: true`, OpenAI Codex `/agent` with background execution, Cursor 2.0 parallel agents.
 
-Wait for all background agents to complete. You will be notified automatically — do not poll.
+1. Spawn one background sub-agent per task in the current wave (respecting the package-install conflict guard from Step 3).
+2. Print, before spawning:
+   ```
+   Phase {phase_number}: {phase_title} · Wave {wave_number} ({N} task(s), parallel)
+   → {task_1_description}
+   → {task_2_description}  (if applicable)
+   ```
+3. Proceed to Step 6 (wait for results).
+
+### Mode B — Sequential in main session (safe default)
+
+Use this mode when parallel sub-agents are unavailable, unreliable, or unknown. This is the correct choice for any runtime where you cannot be certain sub-agents will complete without blocking or dropping output.
+
+1. Print, before starting:
+   ```
+   Phase {phase_number}: {phase_title} · Wave {wave_number} ({N} task(s), sequential)
+   → {task_1_description}
+   → {task_2_description}  (if applicable)
+   ```
+2. For each task in the wave, in order:
+   a. Execute the full task brief yourself (same brief that would go to a sub-agent — load the files, implement the task, run lint/typecheck).
+   b. On success, print `DONE: {task_description}`.
+   c. On failure, print `FAILED: {task_description}` with the error output and go to Error Handling.
+3. Proceed to Step 7 once all wave tasks are done.
+
+### Choosing the mode
+
+- When in doubt, use Mode B. Sequential is always correct; parallel is an optimization.
+- The user may request Mode B explicitly ("run sequentially", "one at a time") at any point — honor it.
+- You may switch to Mode B after a wave if Mode A produced flaky or missing output in this session.
+
+## Step 6: Wait for Results (Mode A only)
+
+In Mode A, wait for every sub-agent in the wave to report back before advancing. Runtimes differ in how they surface completion:
+- Some notify automatically when background agents finish.
+- Some require reading an output file or checking a status endpoint.
+
+Use whatever your runtime provides. If your runtime has no reliable "wait" mechanism, you are not actually running Mode A — switch to Mode B for the next wave.
+
+In Mode B, there is no wait step — tasks completed inline before moving on.
 
 ## Step 7: Continue
 
-**If any agent returned `FAILED`**: go to Error Handling.
+**If any task returned `FAILED`**: go to Error Handling.
 
-**If all agents returned `DONE`**:
+**If all tasks returned `DONE`**:
 
 1. Check off all completed tasks in `implementation-plan.md`:
    `- [ ] [wave:N] {task}` → `- [x] [wave:N] {task}`
@@ -258,15 +298,15 @@ Review the changes, commit when ready, then run /deploy-check before pushing.
 
 ## Error Handling
 
-### Sub-agent returned FAILED:
+### A task returned FAILED:
 
 ```
 ⚠️ Task failed: {task_description}
 
 Error:
-{error output from agent}
+{error output}
 
-The agent tried up to 2 auto-fixes and could not resolve it.
+The task tried up to 2 auto-fixes and could not resolve it.
 
 Fix the issue manually, then tell me to continue — I'll retry from this task.
 ```

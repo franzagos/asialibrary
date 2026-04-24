@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A production-ready Next.js boilerplate for building AI-powered web applications. Designed for use with Claude Code as the primary development tool.
+A production-ready Next.js boilerplate for building AI-powered web applications. Works with any modern AI coding agent — Claude Code, OpenAI Codex, or Cursor Composer.
 
 ### Tech Stack
 
@@ -52,7 +52,7 @@ Use this to decide which files to read for a given task. **Don't load everything
 ### E2E Testing
 - `playwright.config.ts` — Playwright config (baseURL, browser, webServer)
 - `e2e/` — all E2E test files (one file per feature area)
-- Run via `/test-e2e` command or `pnpm test:e2e` directly
+- Run with `pnpm test:e2e`
 
 ## Critical Rules
 
@@ -199,7 +199,7 @@ pnpm db:reset     # Drop and recreate all tables
 
 When implementing a task, follow this loading strategy:
 
-1. **Always load first**: `CLAUDE.md`, `src/lib/schema.ts`, `package.json`
+1. **Always load first**: `AGENTS.md`, `src/lib/schema.ts`, `package.json`
 2. **For API work**: add `src/lib/api-utils.ts`, `src/lib/rate-limit.ts`
 3. **For auth work**: add `src/lib/auth.ts`, `src/lib/session.ts`
 4. **For UI work**: add `src/app/globals.css`, check `src/components/ui/` for existing components
@@ -213,7 +213,7 @@ This prevents context window waste on large projects.
 When the user describes something to build, ask yourself: **would this feature deserve its own page in the app's documentation?**
 
 - **No** → implement directly in this context. Bug fixes, styling tweaks, adding a button to an existing page, extending an existing feature with a small enhancement — just do it.
-- **Yes** → it introduces a new capability to the app (new entities, new user flows, new screens). Create a spec first, then build via sub-agents.
+- **Yes** → it introduces a new capability to the app (new entities, new user flows, new screens). Create a spec first, then build via `/continue-feature` (which uses your runtime's sub-agent mechanism if available, or executes sequentially otherwise).
 - **Ambiguous** → check what already exists in the codebase (routes, schema, components) and ask the user: "This touches X — do you want me to spec it or just handle it?"
 
 ### Without spec: implement directly following all rules above.
@@ -221,11 +221,11 @@ When the user describes something to build, ask yourself: **would this feature d
 ### With spec:
 
 **Building a new app from scratch:**
-1. Read `.claude/commands/starter-prompt.md` and follow it — interview the user, generate all spec files + `docs/business/starter-prompt.md`, then build everything automatically.
+1. Read `.shared/commands/starter-prompt.md` and follow it — interview the user, generate all spec files + `docs/business/starter-prompt.md`, then build everything automatically.
 
 **Adding a feature to an existing app:**
-1. Read `.claude/commands/create-spec.md` and follow it — interview the user, run research agents, generate the spec. Stop after the user confirms the plan.
-2. Then read `.claude/commands/continue-feature.md` and follow it — it loops automatically until all tasks are complete.
+1. Read `.shared/commands/create-spec.md` and follow it — interview the user, run research (parallel sub-agents if the runtime supports them, otherwise inline), generate the spec. Stop after the user confirms the plan.
+2. Then read `.shared/commands/continue-feature.md` and follow it — it loops automatically until all tasks are complete, using parallel waves or sequential execution per runtime capability.
 
 ### Feature Documentation Rule
 

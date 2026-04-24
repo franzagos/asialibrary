@@ -4,7 +4,11 @@ description: Interview the user about what they want to build, then create a det
 
 # Create Spec
 
-This command has three phases: **interview**, **research**, and **generate**.
+Three phases: **interview**, **research**, **generate**.
+
+## Runtime capabilities
+
+This command works on any runtime. Research prefers parallel sub-agents + MCP docs lookup when available, but has a fully local-first fallback that needs neither. See `.shared/CAPABILITIES.md`.
 
 ## Phase 1: Interview
 
@@ -70,36 +74,44 @@ Only proceed to Phase 1.5 after the user confirms.
 
 ## Phase 1.5: Research
 
-Before generating any files, run research agents in parallel to ground the spec in the actual codebase. This prevents placeholder paths and invented symbol names in `### Technical Details`.
+Ground the spec in the actual codebase so `### Technical Details` sections reference real paths and real symbols, not placeholders.
 
 Tell the user: "Great! Let me quickly research the codebase before generating your spec..."
 
-### Research Agent 1: Codebase Scout (always spawn)
+### What to produce
 
-Spawn via Agent tool with `run_in_background: true`.
+Two JSON artifacts under `.planning/` (create the folder if missing):
+- `.planning/research-codebase.json` — **always produced** (local only, no external calls)
+- `.planning/research-docs.json` — produced only if external APIs are needed AND an external docs tool is available
 
-**Brief:**
-```
-You are a codebase research agent. Explore this Next.js project and produce a structured research report. Do NOT modify any files.
+### How to produce them — pick an execution mode
 
-Feature being planned: {feature_name}
-User needs: {one-sentence summary from interview}
+**Mode A — Parallel sub-agents (preferred when reliably available)**: spawn two background research agents with the briefs below. Use file-based polling (`.planning/research-*.json`) to detect completion. If after 120 seconds a file hasn't appeared, treat that agent as incomplete.
+
+**Mode B — Inline in the main session (safe default)**: you yourself do the research. Read the files, synthesize the findings, write the JSON artifacts directly. No polling, no timeouts.
+
+Use Mode B unless you are confident your runtime runs background sub-agents reliably. Mode B is always correct.
+
+### Research Agent 1 / Inline Research — Codebase Scout (always runs)
+
+**Goal:** map the existing codebase so spec paths and symbol names are real.
 
 Read and report on:
-1. src/lib/schema.ts — list all existing tables and their key columns
-2. src/app/api/ — list all existing API routes (file path + HTTP methods)
-3. src/components/ — list all components with a one-line description
-4. src/app/ — list all existing pages and layouts
+1. `src/lib/schema.ts` — list all existing tables and their key columns
+2. `src/app/api/` — list all existing API routes (file path + HTTP methods)
+3. `src/components/` — list all components with a one-line description
+4. `src/app/` — list all existing pages and layouts
 
 For each item relevant to the planned feature, note:
 - Exact file path
 - What it does
 - Whether it can be reused, extended, or must be created fresh
 
-Output a JSON object and write it to .planning/research-codebase.json:
+Write `.planning/research-codebase.json`:
+```json
 {
-  "existing_tables": [{"name": "...", "columns": [...]}],
-  "existing_routes": [{"path": "...", "methods": [...], "description": "..."}],
+  "existing_tables": [{"name": "...", "columns": ["..."]}],
+  "existing_routes": [{"path": "...", "methods": ["..."], "description": "..."}],
   "reusable_components": [{"path": "...", "description": "..."}],
   "existing_pages": [{"path": "...", "description": "..."}],
   "patterns_to_follow": ["..."],
@@ -108,85 +120,69 @@ Output a JSON object and write it to .planning/research-codebase.json:
     "phase_2": ["..."]
   }
 }
-
-Write the JSON to .planning/research-codebase.json and then stop.
 ```
 
-### Research Agent 2: Docs Fetcher (conditional)
+### Research Agent 2 / Inline Research — Docs Fetcher (conditional)
 
-Spawn only if the feature needs external APIs (detected from interview: payments, email, SMS, maps, OAuth providers, etc.).
+Runs only if BOTH of these are true:
+1. The feature needs external APIs (detected from interview: payments, email, SMS, maps, OAuth providers, etc.).
+2. An external documentation tool is available in the runtime (e.g. a Context7 MCP server, a `query-docs` tool, or similar).
 
-**Brief:**
-```
-You are a documentation research agent. Look up and summarize relevant external API documentation.
+**If no external docs tool is available**, skip this agent entirely and write a clear note into `research-notes.md` under "Research Status": `docs: skipped — no external docs tool in this runtime. Verify API shapes from vendor docs before implementing.`
 
-Feature: {feature_name}
-External APIs needed: {list from interview}
+**If an external docs tool is available**, use it to look up each API:
+- Authentication method
+- Key endpoints
+- Request/response shapes
+- SDK name (if any)
+- Rate limits
+- Known gotchas
 
-For each API:
-1. Use mcp__context7__resolve-library-id to find the library ID
-2. Use mcp__context7__query-docs to retrieve its quickstart and API reference
-3. Extract: authentication method, key endpoints, request/response shapes, SDK name, rate limits, gotchas
-
-Do NOT use WebFetch. Use Context7 only — it is pre-approved and covers all major libraries.
-If a library is not found in Context7, note "not in Context7" and proceed with best available knowledge.
-
-Output a JSON object and write it to .planning/research-docs.json:
+Write `.planning/research-docs.json`:
+```json
 {
   "apis": [
     {
       "name": "...",
-      "docs_url": "...",
       "auth_method": "...",
       "key_endpoints": ["..."],
       "sdk": "...",
       "gotchas": ["..."]
     }
-  ]
+  ],
+  "tool_used": "context7 | other | skipped",
+  "skipped_reason": "..."
 }
-
-Write the JSON to .planning/research-docs.json and then stop.
 ```
 
-### Polling for research completion
+Do not invent docs. If a library isn't in the available tool's index, note it and proceed with best available knowledge from the main context.
 
-Create `.planning/` if it doesn't exist: `mkdir -p .planning`
+### Progress output
 
-**IMPORTANT: Do NOT call TaskOutput to wait for background agents — it will timeout. Instead, poll by checking for file existence using Bash.**
-
-Poll loop — repeat every ~5 seconds using Bash:
-
-```bash
-# Check codebase scout
-ls .planning/research-codebase.json 2>/dev/null && echo "scout_done" || echo "scout_running"
-
-# Check docs fetcher (if spawned)
-ls .planning/research-docs.json 2>/dev/null && echo "docs_done" || echo "docs_running"
-```
-
-After each check, output:
+Print one status line after each check:
 
 ```
 Researching codebase...
-
-  Codebase Scout:  {✓ done / ⏳ running}
-  Docs Fetcher:    {✓ done / ⏳ running / — skipped}
+  Codebase Scout:  {✓ done / ⏳ running / ⚠ incomplete}
+  Docs Fetcher:    {✓ done / ⏳ running / — skipped (no docs tool) / ⚠ incomplete}
 ```
 
-If after 120 seconds a file isn't present, proceed without it and note "research incomplete" in the spec.
+In Mode A, poll `.planning/*.json` files via Bash (or your runtime's file-check primitive). If a research file never appears within 120 seconds, treat it as incomplete and move on.
+
+In Mode B, you produce the files directly — no polling needed.
 
 ### Consuming research output
 
-Before generating any spec files, read the research JSON files:
-- `.planning/research-codebase.json` (if it exists)
-- `.planning/research-docs.json` (if it exists)
+Before generating spec files, read whichever research artifacts exist:
+- `.planning/research-codebase.json` — should always exist
+- `.planning/research-docs.json` — may or may not exist
 
-Use to:
+Use them to:
 1. Populate `### Files to Read` sections with real paths from `files_to_read_per_phase`
 2. Populate `### Technical Details` with actual table names, column names, existing component names, real import paths
 3. Create `specs/{feature-name}/research-notes.md` (see step 5 in Phase 2)
 
-If research is incomplete (agent timed out), add a note in the affected `### Technical Details` section:
+If research is incomplete, add a note in the affected `### Technical Details` section:
 `NOTE: research incomplete — verify these paths before implementing`
 
 ## Phase 2: Generate Spec
@@ -279,6 +275,7 @@ Path: `specs/{feature-name}/` (kebab-case)
 - Tasks in the same wave are independent of each other
 - Wave numbering resets per phase (not global)
 - The `(blocked by: wave:N)` annotation is human-readable documentation only
+- Wave markers are used by `/continue-feature` whether running in parallel or sequential mode — in sequential mode, waves execute one task at a time in the order listed
 
 **Wave assignment example**:
 ```markdown
@@ -346,12 +343,12 @@ If there are no manual steps at all: write "No manual steps required."
 
 ### 5. Create `research-notes.md`
 
-Human-readable summary of research agent findings. Skip this file if both research agents timed out.
+Human-readable summary of research findings. Skip only if both the codebase scout and the docs fetcher were unavailable or incomplete (rare).
 
 ```markdown
 # Research Notes: {Feature Name}
 
-Generated by research agents before spec creation. Do not edit manually.
+Generated during spec creation. Do not edit manually.
 
 ## Codebase Findings
 
@@ -371,12 +368,14 @@ Generated by research agents before spec creation. Do not edit manually.
 {structured list sourced from files_to_read_per_phase}
 
 ## External API Notes
-{if docs agent ran: one section per API with auth method, key endpoints, SDK, gotchas}
-{if docs agent skipped: "No external APIs required for this feature."}
+{if docs research ran: one section per API with auth method, key endpoints, SDK, gotchas}
+{if docs research was skipped: "External API docs: skipped (no docs tool available in this runtime). Verify vendor docs before implementing {list APIs}."}
+{if no external APIs needed: "No external APIs required for this feature."}
 
 ## Research Status
-- Codebase Scout: {complete / incomplete — timed out}
-- Docs Fetcher: {complete / incomplete / skipped}
+- Codebase Scout: {complete / incomplete — reason}
+- Docs Fetcher: {complete / skipped (no docs tool) / skipped (no external APIs) / incomplete — reason}
+- Execution mode: {parallel / sequential}
 ```
 
 ### 7. Create `decisions.md`
@@ -420,9 +419,9 @@ Example:
 
 ### 2. Surface manual steps inline
 
-Read `specs/{feature-name}/action-required.md`. Then:
+Read `specs/{feature-name}/action-required.md`. Then, matching the exact headings used by the template in section 4 of Phase 2:
 
-- If it contains **Before Implementation** steps: present them directly in the conversation. Don't say "go read the file" — list the steps yourself and ask the user to confirm when done.
+- If it contains a `## Before you start building` section with one or more steps: present them directly in the conversation. Don't say "go read the file" — list the steps yourself and ask the user to confirm when done.
 
   Example:
   > Before we can start building, you'll need to do a few things:
@@ -432,12 +431,12 @@ Read `specs/{feature-name}/action-required.md`. Then:
   >
   > Let me know when these are done and I'll start building.
 
-- If there are **After Deploy** steps: mention them briefly so the user knows they exist, but don't block on them.
+- If it contains a `## After deploying` section: mention those steps briefly so the user knows they exist, but don't block on them.
 
   Example:
   > There are also a couple of steps that can only be done after deploying (like registering the webhook URL in Resend) — I'll remind you when we get there.
 
-- If there are **no manual steps**: say so and move straight to step 3.
+- If the file says **"No manual steps required."** (or contains neither of the two sections above with actionable items): skip the manual-steps conversation entirely and move straight to step 3.
 
 ### 3. Ask to start building
 

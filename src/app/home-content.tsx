@@ -213,7 +213,7 @@ export default function HomeContent() {
           <p className="text-xs text-muted-foreground mt-2">
             Ogni sezione ti spiega cos&apos;è, perché serve e come configurarla.
             Quando una sezione è completata diventa verde. Alla fine potrai
-            iniziare a costruire la tua app con Claude Code.
+            iniziare a costruire la tua app con il tuo agente AI.
           </p>
         </div>
 
@@ -580,15 +580,13 @@ export default function HomeContent() {
               Tutto pronto! Ora puoi iniziare a costruire la tua app.
             </p>
             <p className="text-muted-foreground text-xs">
-              Apri la chat di Claude Code (la trovi nella barra laterale di VS
-              Code, oppure premi{" "}
-              <code className="bg-muted px-1 rounded">Cmd + Shift + P</code> e
-              cerca &quot;Claude&quot;). Poi scrivi:
+              Apri il tuo agente AI (Claude Code, Codex, o Cursor Composer) e
+              scrivi:
             </p>
             <CopyButton text="/starter-prompt" />
             <Hint>
-              Claude ti farà delle domande su cosa vuoi costruire, poi creerà la
-              tua app automaticamente.
+              L&apos;agente ti farà delle domande su cosa vuoi costruire, poi
+              creerà la tua app automaticamente.
             </Hint>
           </div>
         )}

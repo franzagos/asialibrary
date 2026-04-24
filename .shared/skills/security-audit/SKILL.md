@@ -211,7 +211,7 @@ const data = schema.parse(req.body);
 ## Review Process
 
 1. **Detect scope**: What files are being reviewed? (full audit = all `src/`, targeted = specific routes)
-2. **Load context**: Read CLAUDE.md for project patterns, check `src/lib/api-utils.ts` for helper signatures
+2. **Load context**: Read AGENTS.md for project patterns, check `src/lib/api-utils.ts` for helper signatures
 3. **Scan API routes**: Every file in `src/app/api/` — check rate limiting, auth, validation
 4. **Trace user input**: For each route, trace where request data flows. Does it reach a dangerous sink?
 5. **Check infrastructure**: Headers in `next.config.ts`, secrets handling, storage security
@@ -264,6 +264,16 @@ If no vulnerabilities found: "No high-confidence vulnerabilities identified."
 
 ## After the Audit
 
-- Fix all Critical and High issues immediately.
-- Fix Medium issues unless there's a documented reason to skip.
-- Run `pnpm lint && pnpm typecheck` after any fixes.
+**Report first. Do not apply fixes automatically.** The report itself is the primary deliverable.
+
+Once the report is out, ask the user:
+
+> Want me to fix the Critical and High items? (I'll ask before touching Medium.)
+
+Then:
+
+- **User confirms**: apply fixes in order of severity (Critical → High). For each Medium finding, ask before touching — some are intentional design choices (e.g. loose CSP in dev mode, missing HSTS on localhost). After each batch of fixes, run `pnpm lint && pnpm typecheck`.
+- **User declines**: stop. The report is the deliverable.
+- **User wants only some**: apply exactly what they pick, in severity order.
+
+Never commit or open a PR as part of the audit — leave the diff for the user to review.

@@ -1,6 +1,8 @@
 # Crea webapp come Simo
 
-Un template Next.js per costruire web app moderne con Claude Code, con una struttura guidata che ti permette di lavorare con gli stessi strumenti dei developer senza dover partire da zero.
+Un template Next.js per costruire web app moderne con un agente AI, con una struttura guidata che ti permette di lavorare con gli stessi strumenti dei developer senza dover partire da zero.
+
+> **Agenti supportati**: **Claude Code**, **OpenAI Codex**, e **Cursor Composer**. Lo sviluppo core dell'app funziona bene con tutti e tre. I workflow multi-agente avanzati (`/starter-prompt`, `/create-spec`, `/continue-feature`) preferiscono i sub-agenti paralleli quando il runtime li supporta, ma includono un percorso sequenziale di fallback che funziona in qualsiasi runtime. Dettagli su compatibilità e limiti in [`docs/agent-runtimes/`](docs/agent-runtimes/).
 
 ---
 
@@ -141,11 +143,15 @@ Verifica nel terminale: `docker --version`
 2. Scarica, apri il `.dmg`, trascina nella cartella Applicazioni
 3. Apri VS Code
 
-**Installa l'estensione Claude Code**:
+**Installa l'estensione del tuo agente AI**:
+
+Scegli uno tra questi — tutti funzionano con il boilerplate. Se non sei sicuro, vai con **Claude Code** (è quello su cui il boilerplate è stato sviluppato).
 
 4. Clicca l'icona dei quadratini nella barra laterale sinistra (oppure premi `Cmd + Shift + X`)
-5. Cerca **"Claude Code"** nella barra di ricerca
-6. Clicca **Install** sull'estensione di Anthropic
+5. Cerca e installa **una** tra queste estensioni:
+   - **Claude Code** (Anthropic) — il più testato con questo boilerplate
+   - **OpenAI Codex** — agente CLI di OpenAI
+   - Oppure usa **Cursor** come editor al posto di VS Code (scarica da [cursor.com](https://cursor.com)) — ha Composer integrato
 
 **Il terminale dentro VS Code**:
 
@@ -155,9 +161,14 @@ VS Code ha un terminale integrato — funziona esattamente come il Terminale del
 
 Da questo momento puoi usare questo terminale per tutti i comandi del progetto.
 
-#### 8. Claude Code
+#### 8. L'agente AI (CLI)
 
-**Cos'è**: l'AI che costruirà la tua app insieme a te. Tu descrivi cosa vuoi, Claude scrive il codice.
+**Cos'è**: l'AI che costruirà la tua app insieme a te. Tu descrivi cosa vuoi, l'agente scrive il codice.
+
+Scegli **uno** tra questi tre (quello della cui estensione hai installato al passo 7):
+
+<details>
+<summary><b>Claude Code</b> (consigliato per il boilerplate)</summary>
 
 Serve uno di questi: un piano [Anthropic Max o Pro](https://claude.ai), una [API key Anthropic](https://console.anthropic.com/), oppure un accesso tramite team o azienda.
 
@@ -165,7 +176,30 @@ Serve uno di questi: un piano [Anthropic Max o Pro](https://claude.ai), una [API
 sudo npm install -g @anthropic-ai/claude-code
 ```
 
-Durata: circa 30 secondi. Verifica con `claude --version`.
+Verifica: `claude --version`
+</details>
+
+<details>
+<summary><b>OpenAI Codex CLI</b></summary>
+
+Serve un abbonamento [ChatGPT Plus/Pro/Business](https://openai.com/chatgpt/pricing/) oppure una [API key OpenAI](https://platform.openai.com/api-keys).
+
+```bash
+sudo npm install -g @openai/codex
+```
+
+Verifica: `codex --version`
+</details>
+
+<details>
+<summary><b>Cursor Composer</b></summary>
+
+Composer è integrato dentro Cursor (l'editor che hai scaricato al passo 7). Non serve installare niente da terminale. Aprilo con `Cmd + I` dentro Cursor.
+
+Serve un abbonamento Cursor (c'è un tier gratuito per iniziare).
+</details>
+
+Durata totale: circa 30 secondi.
 
 ---
 
@@ -325,7 +359,15 @@ Dopo qualche secondo vedrai un messaggio con `http://localhost:3000`. Apri quel 
 
 ### 9. Quando la guida è completa
 
-Tutti i check obbligatori sono verdi? Apri la chat di Claude su VSCODE e scrivi: `/starter-prompt` per iniziare a costruire la tua app.
+Tutti i check obbligatori sono verdi? Avvia il tuo agente AI e scrivi `/starter-prompt`.
+
+- **Claude Code**: apri un nuovo terminale e digita `claude`, poi scrivi `/starter-prompt`
+- **Codex**: apri un nuovo terminale e digita `codex`, poi scrivi `/starter-prompt`
+- **Cursor Composer**: apri Composer con `Cmd + I` dentro Cursor, poi scrivi `/starter-prompt`
+
+> **Se l'agente non riconosce `/starter-prompt`** (la discovery dei comandi custom varia tra i runtime): apri `.shared/commands/starter-prompt.md`, copia il contenuto e incollalo direttamente nella sessione dell'agente come prompt. Ogni comando shared è autosufficiente e funziona anche in questa modalità. Dettagli specifici per runtime in [`docs/agent-runtimes/`](docs/agent-runtimes/) (es. [`codex.md`](docs/agent-runtimes/codex.md)).
+
+L'agente ti farà delle domande su cosa vuoi costruire e poi creerà la tua app automaticamente.
 
 ---
 
@@ -333,13 +375,17 @@ Tutti i check obbligatori sono verdi? Apri la chat di Claude su VSCODE e scrivi:
 
 ### Costruire una nuova app
 
-Scrivi `/starter-prompt` dentro Claude Code. Claude ti fa una serie di domande: cosa vuoi costruire, chi lo usa, quali feature, che design vuoi. Poi esplora il codice esistente, crea un piano dettagliato, e inizia a costruire tutto in automatico — una fase alla volta, ognuna in isolamento con un contesto pulito.
+Scrivi `/starter-prompt` dentro il tuo agente AI. L'agente ti fa una serie di domande: cosa vuoi costruire, chi lo usa, quali feature, che design vuoi. Poi esplora il codice esistente, crea un piano dettagliato, e inizia a costruire tutto in automatico — una fase alla volta, ognuna in isolamento con un contesto pulito.
 
 Al termine ti ritrovi con la tua app funzionante. Rivedi le modifiche, committi quando sei soddisfatto.
 
 ### Aggiungere una feature
 
-Scrivi `/create-spec`. Claude ti intervista sulla feature, poi genera una spec dettagliata con tutte le decisioni tecniche. Quando la spec è pronta, scrivi `/continue-feature` per costruire tutto in automatico. Per Per bug, stili, piccole correzioni o feature semplici, descrivi direttamente cosa vuoi. Claude lo fa senza bisogno di spec.
+Scrivi `/create-spec`. L'agente ti intervista sulla feature, poi genera una spec dettagliata con tutte le decisioni tecniche. Quando la spec è pronta, scrivi `/continue-feature` per costruire tutto in automatico — in parallelo se il runtime supporta sub-agenti in background, altrimenti in modalità sequenziale nella sessione principale (stesso output, più lento).
+
+### Modifiche semplici
+
+Per bug, testi, stili, piccole correzioni — descrivi direttamente cosa vuoi. L'agente lo fa senza bisogno di spec.
 
 ### Prima del deploy
 
@@ -374,17 +420,39 @@ Scrivi `/create-spec`. Claude ti intervista sulla feature, poi genera una spec d
 | `pnpm test:e2e` | Test E2E headless |
 | `pnpm test:e2e:ui` | Playwright UI interattiva |
 
-**Comandi Claude Code**:
+**Comandi disponibili**
+
+Invocabili come slash command nei runtime che supportano la discovery (`.claude/commands/`, `.agents/commands/`, `.cursor/commands/` — tutti symlink a `.shared/commands/`). Dove la discovery non funziona, il contenuto del file `.shared/commands/{nome}.md` può essere incollato direttamente nella sessione dell'agente — ogni comando è scritto per funzionare anche così.
 
 | Comando | |
 |---|---|
 | `/starter-prompt` | Costruisce una nuova app da zero (intervista → spec → build automatica) |
 | `/create-spec` | Crea la spec per una nuova feature |
-| `/continue-feature` | Esegue tutti i task della spec in automatico |
-| `/security-audit` | Scansione di sicurezza completa con report e fix automatici |
+| `/continue-feature` | Esegue tutti i task della spec (parallelo o sequenziale, in base al runtime) |
+| `/security-audit` | Security review basata su confidence: prima produce il report, poi chiede conferma prima di applicare fix |
 | `/deploy-check` | Verifica che tutto sia pronto per il deploy |
 
-**Architettura multi-agente**: ogni task viene eseguito da un sotto-agente con contesto fresco (200k token). L'orchestratore legge solo la spec e coordina. La direzione di design viene estratta dai requisiti e iniettata in ogni brief UI. La qualità rimane costante anche su sessioni lunghe.
+**Architettura agent-agnostica**:
+
+Il boilerplate è strutturato per funzionare con Claude Code, OpenAI Codex, e Cursor Composer con un'unica fonte di verità:
+
+```
+AGENTS.md                   ← regole del progetto (CLAUDE.md è un symlink)
+.shared/
+  commands/*.md             ← comandi slash (source of truth)
+  skills/{name}/SKILL.md    ← skill auto-triggered
+.claude/commands → ../.shared/commands   (symlink)
+.claude/skills   → ../.shared/skills     (symlink)
+.agents/commands → ../.shared/commands   (symlink)   ← Codex
+.agents/skills   → ../.shared/skills     (symlink)   ← Codex
+.cursor/commands → ../.shared/commands   (symlink)   ← Cursor
+.cursor/rules/project.mdc                ← generato da AGENTS.md
+scripts/sync-cursor-rules.sh             ← rigenera il .mdc quando cambi AGENTS.md
+```
+
+**Architettura multi-agente (capability-aware)**: i comandi shared sono scritti in modo tool-agnostico con un modello a capability esplicito (vedi [`.shared/CAPABILITIES.md`](.shared/CAPABILITIES.md)). Quando il runtime supporta sub-agenti paralleli in background (Claude Code `Task` tool, Codex `/agent` con Agents SDK, Cursor 2.0 parallel agents), ogni task di una wave gira con contesto fresco in parallelo. Quando i sub-agenti non sono disponibili o affidabili, lo stesso orchestratore esegue i task sequenzialmente nella sessione principale — stesso output, più lento. La direzione di design viene estratta dai requisiti e iniettata in ogni brief UI in entrambe le modalità.
+
+**Cosa è verificato oggi**: lo sviluppo base (editing di file, lint, typecheck, build) funziona identicamente in tutti e tre i runtime. Il fallback sequenziale dei comandi shared è progettato per non dipendere da feature avanzate. Il percorso parallelo è verificato su Claude Code; su Codex e Cursor dipende dal supporto runtime corrente — vedi [`docs/agent-runtimes/codex.md`](docs/agent-runtimes/codex.md) per lo status.
 
 *Ispirato dall'[Agentic Coding Starter Kit di Leon van Zyl](https://github.com/leonvanzyl/agentic-coding-starter-kit).*
 

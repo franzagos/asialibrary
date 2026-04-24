@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn, signUp } from "@/lib/auth-client";
 import { Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -72,45 +75,34 @@ export function AuthForm({ mode }: AuthFormProps) {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {!isLogin && (
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium mb-1.5"
-            >
-              Name
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="name">Name</Label>
+            <Input
               id="name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               placeholder="Your name"
             />
           </div>
         )}
 
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium mb-1.5">
-            Email
-          </label>
-          <input
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             placeholder="you@example.com"
           />
         </div>
 
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label htmlFor="password" className="block text-sm font-medium">
-              Password
-            </label>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Password</Label>
             {isLogin && (
               <Link
                 href="/forgot-password"
@@ -120,30 +112,23 @@ export function AuthForm({ mode }: AuthFormProps) {
               </Link>
             )}
           </div>
-          <input
+          <Input
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={8}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             placeholder="••••••••"
           />
         </div>
 
-        {error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-        >
+        <Button type="submit" disabled={loading} className="w-full">
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
           {isLogin ? "Sign in" : "Create account"}
-        </button>
+        </Button>
       </form>
 
       {/* Divider */}
@@ -157,9 +142,11 @@ export function AuthForm({ mode }: AuthFormProps) {
       </div>
 
       {/* Google Sign In */}
-      <button
+      <Button
+        type="button"
+        variant="outline"
         onClick={handleGoogleSignIn}
-        className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors flex items-center justify-center gap-2"
+        className="w-full"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24">
           <path
@@ -180,7 +167,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           />
         </svg>
         Continue with Google
-      </button>
+      </Button>
 
       {/* Switch mode */}
       <p className="text-center text-sm text-muted-foreground">

@@ -4,15 +4,19 @@ description: Build a complete app from scratch — interview, spec, starter-prom
 
 # Starter Prompt
 
-Builds a full application from a conversation. Interviews the user, creates all spec files, generates a persistent `docs/business/starter-prompt.md` context document, then builds everything automatically using parallel wave execution.
+Builds a full application from a conversation. Interviews the user, creates all spec files, generates a persistent `docs/business/starter-prompt.md` context document, then orchestrates the build through `/continue-feature` (parallel wave execution when the runtime supports it, sequential otherwise).
 
 **Use this when starting a brand new app.** For adding features to an existing app, use `/create-spec` instead.
+
+## Runtime capabilities
+
+This command chains `/create-spec` and `/continue-feature`, inheriting both their fallbacks. See `.shared/CAPABILITIES.md`.
 
 ---
 
 ## Phase 1 + 1.5 + 2: Interview and Spec Generation
 
-Read `.claude/commands/create-spec.md` and follow its **Phase 1** (Interview), **Phase 1.5** (Research), and **Phase 2** (Generate Spec) exactly — including all interview rules, research agents, polling, and spec file generation.
+Read `.shared/commands/create-spec.md` and follow its **Phase 1** (Interview), **Phase 1.5** (Research), and **Phase 2** (Generate Spec) exactly — including all interview rules, research agents, polling, and spec file generation.
 
 When Phase 2 is complete you will have created:
 - `specs/{feature-name}/requirements.md`
@@ -52,11 +56,11 @@ Write `docs/business/starter-prompt.md` using everything gathered in the intervi
 ```markdown
 # {App Name} — Project Context
 
-> Paste this file into any new Claude session to restore full context about this project instantly.
+> Paste this file into any new agent session (Claude Code, OpenAI Codex, Cursor Composer, or similar) to restore full project context instantly.
 
 ## ⚠ Critical Build Constraints
 
-1. Routes `/`, `/dashboard`, `/chat` are boilerplate — **fully replace their contents**, never append to them
+1. Routes `/` and `/dashboard` in the boilerplate are setup/demo scaffolding — **fully replace their contents**, never append to them
 2. Never use Lorem Ipsum or placeholder text like "Coming soon" in any deliverable screen
 3. Every screen that shows a list or table **must** have a real empty state implemented, not a blank box
 4. The first build must be visually complete — no "I'll style this later" stubs or unstyled sections
@@ -120,17 +124,16 @@ Next.js 16 · React 19 · TypeScript · Better Auth · PostgreSQL + Drizzle ORM 
 
 ---
 
-## Context for Claude
+## Context for Your Agent
 
 This project was scaffolded from Simo's Agentic Coding Boilerplate. Important rules:
 
-- **Do NOT restore boilerplate placeholder content**. The following default pages exist in the boilerplate and must be completely replaced — not appended to:
-  - `/` — setup checklist and feature overview (replace with the actual landing page)
+- **Do NOT restore boilerplate placeholder content.** The following default pages exist in the boilerplate and must be completely replaced — not appended to:
+  - `/` — interactive setup wizard (replace with the actual landing page once setup is complete)
   - `/dashboard` — placeholder dashboard (replace with the real app dashboard)
-  - `/chat` — demo AI chat interface (replace or remove entirely)
 - Read `src/lib/schema.ts` to understand the data model before any database work.
 - Check `specs/{feature-name}/` for implementation decisions and task status.
-- Follow all conventions in `CLAUDE.md`.
+- Follow all conventions in `AGENTS.md`.
 - Use `src/lib/api-utils.ts` helpers for all API routes (applyRateLimit, requireApiAuth, parseBody, apiResponse, apiError).
 
 ## Spec Location
@@ -188,9 +191,9 @@ Once the design alignment is approved, say:
 
 > Building now — I'll work through all phases automatically.
 
-Then follow the orchestration from `.claude/commands/continue-feature.md`.
+Then follow the orchestration from `.shared/commands/continue-feature.md`.
 
-**Use parallel wave execution**: spawn all tasks in the current wave simultaneously. Wait for all to complete before moving to the next wave.
+**Execution mode**: `/continue-feature` picks parallel wave execution when the runtime supports it reliably, otherwise sequential. Both modes produce the same output. Do not force parallel mode — trust the command's capability check.
 
 ### Build Quality Gates
 
@@ -261,7 +264,7 @@ Search the codebase for any remaining boilerplate references and remove them:
 - Comments referencing "boilerplate" or "template" in code that was newly written
 - The setup wizard at `/` — it should have been replaced by the actual landing page during the build
 
-### 3. Update `CLAUDE.md` header
+### 3. Update `AGENTS.md` header
 
 Replace the first line:
 ```
@@ -272,4 +275,4 @@ With:
 # {App Name} — AI Assistant Guidelines
 ```
 
-And update the Project Overview paragraph to describe the actual app, not the boilerplate.
+And update the Project Overview paragraph to describe the actual app, not the boilerplate. (`CLAUDE.md` is a symlink to `AGENTS.md`, so this one edit updates both.)

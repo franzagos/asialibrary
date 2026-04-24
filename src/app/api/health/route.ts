@@ -1,7 +1,32 @@
-import { execSync } from "child_process";
+import { exec } from "child_process";
+import { promisify } from "util";
 import { apiResponse, apiError, applyRateLimit } from "@/lib/api-utils";
 import { RATE_LIMITS } from "@/lib/rate-limit";
 import { getSetupStatus } from "@/lib/env";
+
+const execAsync = promisify(exec);
+
+// Git remote rarely changes during a dev session. Cache for 30s so the wizard
+// can re-poll without re-forking git on every hit.
+let githubCache: { value: boolean; expires: number } | null = null;
+const GITHUB_CACHE_TTL_MS = 30_000;
+
+async function isGithubConnected(): Promise<boolean> {
+  if (githubCache && githubCache.expires > Date.now()) return githubCache.value;
+
+  let connected = false;
+  try {
+    const { stdout } = await execAsync("git remote -v", { cwd: process.cwd() });
+    connected =
+      stdout.includes("github.com") &&
+      !stdout.includes("simomagazzu/create-app-like-simo");
+  } catch {
+    connected = false;
+  }
+
+  githubCache = { value: connected, expires: Date.now() + GITHUB_CACHE_TTL_MS };
+  return connected;
+}
 
 export async function GET() {
   // Rate limit — prevent enumeration of config state
@@ -26,20 +51,7 @@ export async function GET() {
       dbConnected = false;
     }
 
-    // Check if the user has connected their own GitHub repo.
-    // Must point to github.com but NOT the original boilerplate repo.
-    let githubConnected = false;
-    try {
-      const remotes = execSync("git remote -v", {
-        cwd: process.cwd(),
-        stdio: ["pipe", "pipe", "pipe"],
-      }).toString();
-      githubConnected =
-        remotes.includes("github.com") &&
-        !remotes.includes("simomagazzu/create-app-like-simo");
-    } catch {
-      githubConnected = false;
-    }
+    const githubConnected = await isGithubConnected();
 
     return apiResponse({
       status: "ok",
