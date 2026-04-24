@@ -1,11 +1,17 @@
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  index,
+  uuid,
+  numeric,
+  pgEnum,
+  primaryKey,
+} from "drizzle-orm/pg-core";
 
 // =============================================================================
 // AUTHENTICATION TABLES (managed by Better Auth)
-// =============================================================================
-// These tables are required by Better Auth. Don't rename the columns
-// or remove fields — Better Auth depends on this exact structure.
-// You CAN add new columns to the user table for your app's needs.
 // =============================================================================
 
 export const user = pgTable(
@@ -16,6 +22,7 @@ export const user = pgTable(
     email: text("email").notNull().unique(),
     emailVerified: boolean("email_verified").default(false).notNull(),
     image: text("image"),
+    role: text("role").default("user").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
@@ -87,15 +94,82 @@ export const verification = pgTable("verification", {
 });
 
 // =============================================================================
-// YOUR APP TABLES
+// APP TABLES
 // =============================================================================
-// Add your own tables below. Use UUIDs for primary keys:
-//
-// import { uuid } from "drizzle-orm/pg-core";
-//
-// export const myTable = pgTable("my_table", {
-//   id: uuid("id").defaultRandom().primaryKey(),
-//   userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
-//   ...
-// });
-// =============================================================================
+
+export const category = pgTable("category", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+});
+
+export const purchaseStatusEnum = pgEnum("purchase_status", [
+  "owned",
+  "wishlist",
+  "lent",
+  "sold",
+]);
+
+export const book = pgTable(
+  "book",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    categoryId: uuid("category_id").references(() => category.id, {
+      onDelete: "set null",
+    }),
+    title: text("title").notNull(),
+    author: text("author"),
+    year: text("year"),
+    edition: text("edition"),
+    description: text("description"),
+    marketPrice: numeric("market_price", { precision: 10, scale: 2 }),
+    coverUrl: text("cover_url"),
+    personalNotes: text("personal_notes"),
+    purchaseStatus: purchaseStatusEnum("purchase_status").default("owned"),
+    purchaseLocation: text("purchase_location"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [
+    index("book_user_id_idx").on(t.userId),
+    index("book_category_id_idx").on(t.categoryId),
+  ]
+);
+
+export const bookTag = pgTable(
+  "book_tag",
+  {
+    bookId: uuid("book_id")
+      .notNull()
+      .references(() => book.id, { onDelete: "cascade" }),
+    tag: text("tag").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.bookId, t.tag] }),
+    index("book_tag_book_id_idx").on(t.bookId),
+    index("book_tag_tag_idx").on(t.tag),
+  ]
+);
+
+export const invitation = pgTable(
+  "invitation",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    token: text("token").notNull().unique(),
+    email: text("email"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    used: boolean("used").default(false).notNull(),
+    usedAt: timestamp("used_at"),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [index("invitation_token_idx").on(t.token)]
+);

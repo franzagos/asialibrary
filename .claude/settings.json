@@ -38,7 +38,14 @@
       "Bash(rm -f:*)",
       "Bash(rm -rf .planning)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npx tsx *)",
+      "Bash(git remote *)",
+      "Bash(git commit -m ' *)"
+    ],
+    "additionalDirectories": [
+      "/Users/francescoagostinis/Desktop/Progetti/AsiaLibrary/src/app/api/books",
+      "/Users/francescoagostinis/Desktop/Progetti/AsiaLibrary/src/app/library"
     ]
   },
   "enableAllProjectMcpServers": true

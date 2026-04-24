@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
  * Routes that require authentication.
  * Add your protected routes here.
  */
-export const protectedRoutes = ["/dashboard", "/profile"];
+export const protectedRoutes = ["/library", "/admin", "/profile"];
 
 /**
  * Require authentication in a Server Component.
@@ -19,7 +19,7 @@ export const protectedRoutes = ["/dashboard", "/profile"];
 export async function requireAuth() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
-    redirect("/");
+    redirect("/login");
   }
   return session;
 }

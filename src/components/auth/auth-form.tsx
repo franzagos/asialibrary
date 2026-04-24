@@ -42,7 +42,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           return;
         }
       }
-      router.push("/dashboard");
+      router.push("/library");
       router.refresh();
     } catch {
       setError("Something went wrong. Please try again.");
@@ -54,7 +54,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   async function handleGoogleSignIn() {
     setError("");
     try {
-      await signIn.social({ provider: "google", callbackURL: "/dashboard" });
+      await signIn.social({ provider: "google", callbackURL: "/library" });
     } catch {
       setError("Google sign-in failed. Is it configured?");
     }
@@ -63,13 +63,14 @@ export function AuthForm({ mode }: AuthFormProps) {
   return (
     <div className="space-y-6">
       <div className="text-center">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: "var(--terracotta)" }}>
+          <span className="text-white text-lg">📚</span>
+        </div>
         <h1 className="text-2xl font-bold tracking-tight">
-          {isLogin ? "Welcome back" : "Create an account"}
+          {isLogin ? "Bentornata" : "Crea un account"}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {isLogin
-            ? "Sign in to your account"
-            : "Enter your details to get started"}
+          Asia&apos;s Library
         </p>
       </div>
 
@@ -108,7 +109,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 href="/forgot-password"
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                Forgot password?
+                Password dimenticata?
               </Link>
             )}
           </div>
@@ -127,7 +128,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
         <Button type="submit" disabled={loading} className="w-full">
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-          {isLogin ? "Sign in" : "Create account"}
+          {isLogin ? "Accedi" : "Crea account"}
         </Button>
       </form>
 
@@ -137,7 +138,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           <span className="w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">or</span>
+          <span className="bg-background px-2 text-muted-foreground">oppure</span>
         </div>
       </div>
 
@@ -170,15 +171,11 @@ export function AuthForm({ mode }: AuthFormProps) {
       </Button>
 
       {/* Switch mode */}
-      <p className="text-center text-sm text-muted-foreground">
-        {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-        <Link
-          href={isLogin ? "/register" : "/login"}
-          className="text-foreground underline underline-offset-2 hover:text-foreground/80 transition-colors"
-        >
-          {isLogin ? "Sign up" : "Sign in"}
-        </Link>
-      </p>
+      {isLogin && (
+        <p className="text-center text-sm text-muted-foreground">
+          Non hai un account? Chiedi un invito ad Asia.
+        </p>
+      )}
     </div>
   );
 }
