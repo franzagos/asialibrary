@@ -88,7 +88,7 @@ Rules:
 {"descriptionIt":"descrizione in italiano qui","descriptionEn":"description in English here","descriptionRu":"описание на русском здесь"}`,
     });
 
-    console.log("[identify] enrichment raw:", text.slice(0, 300));
+
     const parsed = parseJSON(text);
 
     // Strip citation markers like [1], [2][5] from string values

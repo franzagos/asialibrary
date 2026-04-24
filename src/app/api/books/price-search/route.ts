@@ -5,13 +5,6 @@ import { z } from "zod";
 
 const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
 
-function parseJSON(text: string): Record<string, unknown> {
-  const clean = text.replace(/```(?:json)?\n?/g, "").trim();
-  const start = clean.indexOf("{");
-  const end = clean.lastIndexOf("}");
-  if (start === -1 || end === -1) return {};
-  try { return JSON.parse(clean.slice(start, end + 1)); } catch { return {}; }
-}
 
 export async function POST(req: Request) {
   const limited = await applyRateLimit("books-price-search", { maxRequests: 10, windowSeconds: 60 });
@@ -43,7 +36,7 @@ End your response with a line in exactly this format:
 PRICE_EUR: 12.50`,
     });
 
-    console.log("[price-search] raw:", text.slice(0, 600));
+
 
     // Extract price from "PRICE_EUR: X.XX" line
     const match = text.match(/PRICE_EUR:\s*([\d]+(?:[.,]\d+)?)/i);
