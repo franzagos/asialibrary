@@ -22,10 +22,11 @@ async function sendEmail(to: string, subject: string, html: string) {
       throw new Error(result.error.message);
     }
   } else {
-    // Dev: print to terminal so you can click the link directly
-    const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    // Dev: extract and print the raw URL so it's clickable in the terminal
+    const urlMatch = html.match(/href="([^"]+)"/);
+    const url = urlMatch?.[1] ?? html.replace(/<[^>]+>/g, " ").trim();
     console.log(
-      `\n${"=".repeat(60)}\n📧 ${subject}\nTo: ${to}\n${text}\n${"=".repeat(60)}\n`
+      `\n${"=".repeat(60)}\n📧 ${subject}  →  ${to}\n\n${url}\n${"=".repeat(60)}\n`
     );
   }
 }
