@@ -27,8 +27,9 @@ interface IdentifyResult {
     edition?: string;
   } | null;
   enrichment: {
-    description?: string;
-    marketPrice?: number;
+    descriptionIt?: string;
+    descriptionEn?: string;
+    descriptionRu?: string;
   } | null;
 }
 
@@ -66,7 +67,7 @@ export function UploadFlow({ categories }: { categories: Category[] }) {
       if (!res.ok) throw new Error();
       const data: IdentifyResult = await res.json();
       setIdentifyResult(data);
-      if (data.identified && !data.enrichment?.description && !data.enrichment?.marketPrice) {
+      if (data.identified && !data.enrichment?.descriptionIt && !data.enrichment?.descriptionEn && !data.enrichment?.descriptionRu) {
         setEnrichmentFailed(true);
       }
     } catch {
@@ -79,7 +80,8 @@ export function UploadFlow({ categories }: { categories: Category[] }) {
   const handleSave = async (formData: FormData) => {
     const res = await fetch("/api/books", { method: "POST", body: formData });
     if (!res.ok) {
-      toast.error("Errore durante il salvataggio");
+      const body = await res.json().catch(() => ({}));
+      toast.error(body?.error ?? "Errore durante il salvataggio");
       return;
     }
     toast.success("Libro aggiunto alla libreria!");
@@ -92,8 +94,9 @@ export function UploadFlow({ categories }: { categories: Category[] }) {
         author: identifyResult.bookInfo.author,
         year: identifyResult.bookInfo.year,
         edition: identifyResult.bookInfo.edition,
-        description: identifyResult.enrichment?.description,
-        marketPrice: identifyResult.enrichment?.marketPrice?.toString(),
+        descriptionIt: identifyResult.enrichment?.descriptionIt,
+        descriptionEn: identifyResult.enrichment?.descriptionEn,
+        descriptionRu: identifyResult.enrichment?.descriptionRu,
       }
     : undefined;
 
@@ -147,7 +150,7 @@ export function UploadFlow({ categories }: { categories: Category[] }) {
                 <div>
                   <p className="font-medium text-foreground">Carica la foto della copertina</p>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    Trascina qui o clicca per selezionare
+                    <span className="hidden sm:inline">Trascina qui o </span>Clicca per selezionare
                   </p>
                 </div>
                 <p className="text-xs text-muted-foreground">JPG, PNG, WEBP · max 5MB</p>

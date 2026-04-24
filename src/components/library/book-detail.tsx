@@ -14,8 +14,10 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BookForm } from "./book-form";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Pencil, Trash2, Search, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface Category {
@@ -30,7 +32,9 @@ interface Book {
   author?: string | null;
   year?: string | null;
   edition?: string | null;
-  description?: string | null;
+  descriptionIt?: string | null;
+  descriptionEn?: string | null;
+  descriptionRu?: string | null;
   marketPrice?: string | null;
   coverUrl?: string | null;
   personalNotes?: string | null;
@@ -54,6 +58,8 @@ export function BookDetail({ book, categories }: { book: Book; categories: Categ
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [currentBook, setCurrentBook] = useState(book);
+  const [searchingPrice, setSearchingPrice] = useState(false);
+  const [priceSources, setPriceSources] = useState<{ url: string; title?: string }[]>([]);
 
   const categoryName = currentBook.categoryId
     ? categories.find((c) => c.id === currentBook.categoryId)?.name
@@ -72,6 +78,38 @@ export function BookDetail({ book, categories }: { book: Book; categories: Categ
     setCurrentBook({ ...updated, tags: updated.tags ?? [] });
     setEditing(false);
     toast.success("Libro aggiornato");
+  };
+
+  const handleSearchPrice = async () => {
+    setSearchingPrice(true);
+    try {
+      const res = await fetch("/api/books/price-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: currentBook.title, author: currentBook.author }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (data.marketPrice != null) {
+        const updated = await fetch(`/api/books/${currentBook.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ marketPrice: String(data.marketPrice) }),
+        });
+        if (updated.ok) {
+          const u = await updated.json();
+          setCurrentBook({ ...currentBook, marketPrice: u.marketPrice });
+          setPriceSources(data.sources ?? []);
+          toast.success(`Prezzo aggiornato: €${data.marketPrice}`);
+        }
+      } else {
+        toast.info("Prezzo non trovato online");
+      }
+    } catch {
+      toast.error("Errore nella ricerca del prezzo");
+    } finally {
+      setSearchingPrice(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -119,8 +157,8 @@ export function BookDetail({ book, categories }: { book: Book; categories: Categ
         </Link>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-            <Pencil className="w-4 h-4 mr-1.5" />
-            Modifica
+            <Pencil className="w-4 h-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Modifica</span>
           </Button>
           <Button
             variant="outline"
@@ -128,8 +166,8 @@ export function BookDetail({ book, categories }: { book: Book; categories: Categ
             className="text-destructive hover:text-destructive"
             onClick={() => setDeleteOpen(true)}
           >
-            <Trash2 className="w-4 h-4 mr-1.5" />
-            Elimina
+            <Trash2 className="w-4 h-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Elimina</span>
           </Button>
         </div>
       </div>
@@ -195,14 +233,52 @@ export function BookDetail({ book, categories }: { book: Book; categories: Categ
                 <dd className="font-medium">{currentBook.edition}</dd>
               </>
             )}
-            {currentBook.marketPrice && (
-              <>
-                <dt className="text-muted-foreground">Prezzo mercato</dt>
-                <dd className="font-medium" style={{ color: "var(--terracotta)" }}>
+            <dt className="text-muted-foreground">Prezzo mercato</dt>
+            <dd className="font-medium flex items-center gap-2 flex-wrap">
+              {currentBook.marketPrice ? (
+                <span style={{ color: "var(--terracotta)" }}>
                   €{parseFloat(currentBook.marketPrice).toFixed(2)}
-                </dd>
-              </>
-            )}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">—</span>
+              )}
+              <button
+                onClick={handleSearchPrice}
+                disabled={searchingPrice}
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md px-2 py-0.5 transition-colors"
+              >
+                {searchingPrice ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
+                Cerca
+              </button>
+              {priceSources.length > 0 && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md px-2 py-0.5 transition-colors">
+                      <ExternalLink className="w-3 h-3" />
+                      Fonti ({priceSources.length})
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-3" align="start">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Fonti del prezzo</p>
+                    <ul className="space-y-1.5">
+                      {priceSources.map((s, i) => (
+                        <li key={i}>
+                          <a
+                            href={s.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-start gap-1.5 text-xs text-primary hover:underline break-all"
+                          >
+                            <ExternalLink className="w-3 h-3 mt-0.5 shrink-0" />
+                            {s.title ?? new URL(s.url).hostname}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </dd>
             {currentBook.purchaseLocation && (
               <>
                 <dt className="text-muted-foreground">Luogo acquisto</dt>
@@ -211,10 +287,25 @@ export function BookDetail({ book, categories }: { book: Book; categories: Categ
             )}
           </dl>
 
-          {currentBook.description && (
+          {(currentBook.descriptionIt || currentBook.descriptionEn || currentBook.descriptionRu) && (
             <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Descrizione</p>
-              <p className="text-sm leading-relaxed text-foreground">{currentBook.description}</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Descrizione</p>
+              <Tabs defaultValue={currentBook.descriptionIt ? "it" : currentBook.descriptionEn ? "en" : "ru"}>
+                <TabsList className="mb-2">
+                  {currentBook.descriptionIt && <TabsTrigger value="it">🇮🇹 IT</TabsTrigger>}
+                  {currentBook.descriptionEn && <TabsTrigger value="en">🇬🇧 EN</TabsTrigger>}
+                  {currentBook.descriptionRu && <TabsTrigger value="ru">🇷🇺 RU</TabsTrigger>}
+                </TabsList>
+                {currentBook.descriptionIt && (
+                  <TabsContent value="it"><p className="text-sm leading-relaxed">{currentBook.descriptionIt}</p></TabsContent>
+                )}
+                {currentBook.descriptionEn && (
+                  <TabsContent value="en"><p className="text-sm leading-relaxed">{currentBook.descriptionEn}</p></TabsContent>
+                )}
+                {currentBook.descriptionRu && (
+                  <TabsContent value="ru"><p className="text-sm leading-relaxed">{currentBook.descriptionRu}</p></TabsContent>
+                )}
+              </Tabs>
             </div>
           )}
 

@@ -16,7 +16,9 @@ const updateBookSchema = z.object({
   author: z.string().optional(),
   year: z.string().optional(),
   edition: z.string().optional(),
-  description: z.string().optional(),
+  descriptionIt: z.string().optional(),
+  descriptionEn: z.string().optional(),
+  descriptionRu: z.string().optional(),
   marketPrice: z.string().optional().nullable(),
   personalNotes: z.string().optional(),
   purchaseStatus: z.enum(["owned", "wishlist", "lent", "sold"]).optional(),
@@ -81,17 +83,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       coverUrl = result.url;
     }
 
+    const g = (key: string) => formData.get(key) ?? undefined;
     const raw = {
-      title: formData.get("title") as string | undefined,
-      author: formData.get("author") as string | undefined,
-      year: formData.get("year") as string | undefined,
-      edition: formData.get("edition") as string | undefined,
-      description: formData.get("description") as string | undefined,
-      marketPrice: formData.get("marketPrice") as string | undefined,
-      personalNotes: formData.get("personalNotes") as string | undefined,
-      purchaseStatus: formData.get("purchaseStatus") as string | undefined,
-      purchaseLocation: formData.get("purchaseLocation") as string | undefined,
-      categoryId: formData.get("categoryId") as string | undefined,
+      title: g("title") as string | undefined,
+      author: g("author") as string | undefined,
+      year: g("year") as string | undefined,
+      edition: g("edition") as string | undefined,
+      descriptionIt: g("descriptionIt") as string | undefined,
+      descriptionEn: g("descriptionEn") as string | undefined,
+      descriptionRu: g("descriptionRu") as string | undefined,
+      marketPrice: g("marketPrice") as string | undefined,
+      personalNotes: g("personalNotes") as string | undefined,
+      purchaseStatus: g("purchaseStatus") as string | undefined,
+      purchaseLocation: g("purchaseLocation") as string | undefined,
+      categoryId: g("categoryId") as string | undefined,
       tags: (formData.get("tags") as string | null)
         ?.split(",")
         .map((t) => t.trim())

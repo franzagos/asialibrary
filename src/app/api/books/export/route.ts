@@ -17,7 +17,9 @@ export async function GET() {
       author: book.author,
       year: book.year,
       edition: book.edition,
-      description: book.description,
+      descriptionIt: book.descriptionIt,
+      descriptionEn: book.descriptionEn,
+      descriptionRu: book.descriptionRu,
       marketPrice: book.marketPrice,
       categoryId: book.categoryId,
       purchaseStatus: book.purchaseStatus,
@@ -54,7 +56,7 @@ export async function GET() {
     return s;
   };
 
-  const header = "title,author,year,edition,description,marketPrice,category,tags,purchaseStatus,purchaseLocation,personalNotes,createdAt\n";
+  const header = "title,author,year,edition,descriptionIt,descriptionEn,descriptionRu,marketPrice,category,tags,purchaseStatus,purchaseLocation,personalNotes,createdAt\n";
   const rows = books
     .map((b) =>
       [
@@ -62,7 +64,9 @@ export async function GET() {
         b.author,
         b.year,
         b.edition,
-        b.description,
+        b.descriptionIt,
+        b.descriptionEn,
+        b.descriptionRu,
         b.marketPrice,
         b.categoryId ? catById[b.categoryId] : "",
         (tagsByBook[b.id] ?? []).join("; "),

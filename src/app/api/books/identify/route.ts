@@ -5,7 +5,6 @@ import { generateText } from "ai";
 const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
 
 function parseJSON(text: string): Record<string, unknown> {
-  // Strip markdown code fences if present
   const clean = text.replace(/```(?:json)?\n?/g, "").trim();
   const start = clean.indexOf("{");
   const end = clean.lastIndexOf("}");
@@ -38,7 +37,7 @@ export async function POST(req: Request) {
 
   try {
     const { text } = await generateText({
-      model: openrouter("google/gemini-2.0-flash"),
+      model: openrouter("meta-llama/llama-3.2-11b-vision-instruct"),
       messages: [
         {
           role: "user",
@@ -69,24 +68,39 @@ export async function POST(req: Request) {
     return apiResponse({ identified: false, bookInfo: null, enrichment: null });
   }
 
-  // Step 2: Enrichment — description + price via Perplexity (web search)
-  let enrichment: { description?: string; marketPrice?: number } = {};
+  // Step 2: Enrichment — descriptions in IT, EN, RU via Perplexity
+  let enrichment: { descriptionIt?: string; descriptionEn?: string; descriptionRu?: string } = {};
 
   try {
-    const query = `"${bookInfo.title}"${bookInfo.author ? ` by ${bookInfo.author}` : ""}`;
+    const title = bookInfo.title!;
+    const author = bookInfo.author ?? "";
     const { text } = await generateText({
       model: openrouter("perplexity/sonar-pro"),
-      prompt: `Search the web and find: (1) a brief description (2-3 sentences) of the book ${query}, and (2) its current average market price in EUR from online bookshops or Amazon. Reply ONLY with a JSON object: {"description":"...","marketPrice":0.00}. Use null for marketPrice if you cannot find a reliable price.`,
+      prompt: `You are a book cataloging assistant. Write a 2-3 sentence description of this book:
+
+Title: ${title}${author ? `\nAuthor: ${author}` : ""}
+
+Rules:
+- Do NOT include citations, references, or footnote markers like [1] [2] etc.
+- Write fluent, natural prose in each language.
+- Your entire response must be ONLY the following JSON object, nothing else before or after it:
+
+{"descriptionIt":"descrizione in italiano qui","descriptionEn":"description in English here","descriptionRu":"описание на русском здесь"}`,
     });
 
+    console.log("[identify] enrichment raw:", text.slice(0, 300));
     const parsed = parseJSON(text);
+
+    // Strip citation markers like [1], [2][5] from string values
+    const stripCitations = (s: string) => s.replace(/\[\d+\]/g, "").trim();
+
     enrichment = {
-      description: typeof parsed.description === "string" ? parsed.description : undefined,
-      marketPrice: typeof parsed.marketPrice === "number" ? parsed.marketPrice : undefined,
+      descriptionIt: typeof parsed.descriptionIt === "string" && parsed.descriptionIt ? stripCitations(parsed.descriptionIt) : undefined,
+      descriptionEn: typeof parsed.descriptionEn === "string" && parsed.descriptionEn ? stripCitations(parsed.descriptionEn) : undefined,
+      descriptionRu: typeof parsed.descriptionRu === "string" && parsed.descriptionRu ? stripCitations(parsed.descriptionRu) : undefined,
     };
   } catch (e) {
     console.error("[identify] enrichment error:", e);
-    // Non-fatal — return what we have from vision
   }
 
   return apiResponse({ identified: true, bookInfo, enrichment });

@@ -30,7 +30,7 @@ export function LibraryShell({ categories, isAdmin, children }: Props) {
 
       {/* Mobile header + sheet */}
       <div className="flex flex-col flex-1 min-w-0">
-        <header className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-white sticky top-0 z-10">
+        <header className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-background sticky top-0 z-10">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="-ml-2">
