@@ -124,5 +124,15 @@
   }
   body {
     @apply bg-background text-foreground;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Prevent iOS auto-zoom on input focus */
+  @media (max-width: 768px) {
+    input:not([type="range"]),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
   }
 }

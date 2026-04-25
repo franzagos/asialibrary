@@ -35,7 +35,9 @@ export function LibraryView({ initialFilters, categories }: Props) {
     return "grid";
   });
 
-  const [tab, setTab] = useState<"library" | "wishlist">("library");
+  // Tab is URL-driven so bottom nav links work
+  const tab = searchParams.get("tab") === "wishlist" ? "wishlist" : "library";
+
   const [books, setBooks] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -110,12 +112,16 @@ export function LibraryView({ initialFilters, categories }: Props) {
     ? categories.find((c) => c.id === categoryId)?.name
     : null;
 
+  const isWishlist = tab === "wishlist";
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight">La mia libreria</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">
+            {isWishlist ? "Lista dei desideri" : "La mia libreria"}
+          </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {total} {total === 1 ? "libro" : "libri"}
             {activeCategoryName ? ` · ${activeCategoryName}` : ""}
@@ -138,7 +144,7 @@ export function LibraryView({ initialFilters, categories }: Props) {
               Multiplo
             </Link>
           </Button>
-          <Button asChild size="sm">
+          <Button asChild size="sm" className="hidden sm:flex">
             <Link href="/library/upload">
               <Plus className="w-4 h-4 mr-1.5" />
               Aggiungi libro
@@ -147,43 +153,35 @@ export function LibraryView({ initialFilters, categories }: Props) {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-border">
-        <button
-          onClick={() => setTab("library")}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${tab === "library" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
-        >
-          Libreria
-        </button>
-        <button
-          onClick={() => setTab("wishlist")}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${tab === "wishlist" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
-        >
-          Lista dei desideri
-        </button>
-      </div>
-
       {/* Search + view toggle */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="Cerca per titolo, autore, tag, luogo..."
+            placeholder="Cerca titolo, autore, tag, luogo..."
             value={search}
             onChange={(e) => updateSearch(e.target.value)}
-            className="pl-9"
+            className="pl-9 h-11 text-base sm:text-sm sm:h-10"
           />
+          {search && (
+            <button
+              onClick={() => updateSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
-        <div className="flex items-center border border-border rounded-lg overflow-hidden">
+        <div className="flex items-center border border-border rounded-lg overflow-hidden shrink-0">
           <button
             onClick={() => toggleView("grid")}
-            className={`p-2 transition-colors ${view === "grid" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+            className={`p-2.5 transition-colors ${view === "grid" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
           >
             <LayoutGrid className="w-4 h-4" />
           </button>
           <button
             onClick={() => toggleView("table")}
-            className={`p-2 transition-colors ${view === "table" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+            className={`p-2.5 transition-colors ${view === "table" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
           >
             <List className="w-4 h-4" />
           </button>
@@ -191,20 +189,20 @@ export function LibraryView({ initialFilters, categories }: Props) {
       </div>
 
       {/* Active filters */}
-      {(activeCategoryName || tag || q) && (
+      {(activeCategoryName || tag) && (
         <div className="flex flex-wrap gap-2">
           {activeCategoryName && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-accent text-primary border border-primary/20">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-accent text-primary border border-primary/20">
               {activeCategoryName}
-              <button onClick={() => clearFilter("categoryId")}>
+              <button onClick={() => clearFilter("categoryId")} className="hover:opacity-70">
                 <X className="w-3 h-3" />
               </button>
             </span>
           )}
           {tag && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-muted text-foreground">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-muted text-foreground border border-border">
               #{tag}
-              <button onClick={() => clearFilter("tag")}>
+              <button onClick={() => clearFilter("tag")} className="hover:opacity-70">
                 <X className="w-3 h-3" />
               </button>
             </span>
@@ -215,7 +213,7 @@ export function LibraryView({ initialFilters, categories }: Props) {
       {/* Content */}
       {loading ? (
         <div className={view === "grid"
-          ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"
+          ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
           : "space-y-2"
         }>
           {Array.from({ length: 12 }).map((_, i) => (
@@ -234,20 +232,6 @@ export function LibraryView({ initialFilters, categories }: Props) {
         <BookGrid books={books} />
       ) : (
         <BookTable books={books} categories={categories} />
-      )}
-
-      {/* Mobile export */}
-      {books.length > 0 && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExport}
-          disabled={exporting}
-          className="sm:hidden w-full"
-        >
-          <Download className="w-4 h-4 mr-1.5" />
-          Esporta CSV
-        </Button>
       )}
     </div>
   );

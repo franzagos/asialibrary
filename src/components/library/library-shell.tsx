@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { LibrarySidebar } from "./sidebar";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { MobileNav } from "./mobile-nav";
+import { BookOpen } from "lucide-react";
+import Link from "next/link";
 
 interface Category {
   id: string;
@@ -20,8 +19,6 @@ interface Props {
 }
 
 export function LibraryShell({ categories, tags, isAdmin, children }: Props) {
-  const [open, setOpen] = useState(false);
-
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop sidebar */}
@@ -29,31 +26,26 @@ export function LibraryShell({ categories, tags, isAdmin, children }: Props) {
         <LibrarySidebar categories={categories} tags={tags} isAdmin={isAdmin} />
       </aside>
 
-      {/* Mobile header + sheet */}
+      {/* Content area */}
       <div className="flex flex-col flex-1 min-w-0">
-        <header className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-background sticky top-0 z-10">
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="-ml-2">
-                <Menu className="w-5 h-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-60">
-              <LibrarySidebar
-                categories={categories}
-                tags={tags}
-                isAdmin={isAdmin}
-                onClose={() => setOpen(false)}
-              />
-            </SheetContent>
-          </Sheet>
-          <span className="font-semibold text-sm">Asia&apos;s Library</span>
+        {/* Mobile top bar — minimal logo only */}
+        <header className="md:hidden flex items-center px-4 h-14 border-b border-border bg-background/95 backdrop-blur sticky top-0 z-30">
+          <Link href="/library" className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--terracotta)" }}>
+              <BookOpen className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-semibold tracking-tight text-sm">Asia&apos;s Library</span>
+          </Link>
         </header>
 
-        <main className="flex-1 overflow-y-auto">
+        {/* Page content — extra bottom padding on mobile for bottom nav */}
+        <main className="flex-1 overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
           {children}
         </main>
       </div>
+
+      {/* Mobile bottom nav */}
+      <MobileNav categories={categories} tags={tags} isAdmin={isAdmin} />
     </div>
   );
 }
