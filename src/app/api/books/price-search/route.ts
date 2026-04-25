@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   try {
     const { title, author } = data;
 
-    const { text, sources } = await generateText({
+    const { text } = await generateText({
       model: openrouter("perplexity/sonar-pro"),
       prompt: `Search the web right now for the current used/second-hand market price of this book:
 
@@ -32,21 +32,22 @@ Search Amazon.it, Amazon.com, eBay.it, eBay.com, AbeBooks, IBS, Libraccio and si
 
 Tell me the price you found in EUR (convert from other currencies if needed). Give me a single realistic number based on what you find — an average or the most common price. Do not say you cannot find it; make your best estimate from any available data.
 
-End your response with a line in exactly this format:
-PRICE_EUR: 12.50`,
+End your response with EXACTLY this block (no variations):
+PRICE_EUR: 12.50
+SOURCES:
+https://example.com/listing1
+https://example.com/listing2
+
+Replace the example values with the actual price and actual URLs of the pages you found.`,
     });
 
-
-
-    // Extract price from "PRICE_EUR: X.XX" line
-    const match = text.match(/PRICE_EUR:\s*([\d]+(?:[.,]\d+)?)/i);
+    // Extract price
+    const priceMatch = text.match(/PRICE_EUR:\s*([\d]+(?:[.,]\d+)?)/i);
     let marketPrice: number | null = null;
-    if (match) {
-      const n = parseFloat(match[1].replace(",", "."));
+    if (priceMatch) {
+      const n = parseFloat(priceMatch[1].replace(",", "."));
       if (!isNaN(n) && n > 0) marketPrice = Math.round(n * 100) / 100;
     }
-
-    // Fallback: try to extract any euro price from the text
     if (marketPrice === null) {
       const euroMatch = text.match(/€\s*([\d]+(?:[.,]\d+)?)|EUR\s*([\d]+(?:[.,]\d+)?)/i);
       if (euroMatch) {
@@ -56,18 +57,15 @@ PRICE_EUR: 12.50`,
       }
     }
 
-    // Collect source URLs from SDK sources + any URLs embedded in the text
-    const sourceLinks: { url: string; title?: string }[] = [];
-    for (const s of sources ?? []) {
-      if ("url" in s && typeof s.url === "string") {
-        sourceLinks.push({ url: s.url, title: "title" in s && typeof s.title === "string" ? s.title : undefined });
-      }
-    }
-    // Fallback: extract URLs from text if SDK didn't expose them
-    if (sourceLinks.length === 0) {
-      const urlRegex = /https?:\/\/[^\s\])"]+/g;
-      const found = text.match(urlRegex) ?? [];
-      for (const url of found.slice(0, 8)) sourceLinks.push({ url });
+    // Extract URLs from SOURCES block first, then fallback to any URL in text
+    const sourceLinks: { url: string }[] = [];
+    const sourcesBlockMatch = text.match(/SOURCES:\s*([\s\S]*?)(?:\n\n|$)/i);
+    const urlRegex = /https?:\/\/[^\s\])"<>]+/g;
+    const urlPool = sourcesBlockMatch
+      ? sourcesBlockMatch[1].match(urlRegex) ?? []
+      : text.match(urlRegex) ?? [];
+    for (const url of urlPool.slice(0, 8)) {
+      try { new URL(url); sourceLinks.push({ url }); } catch { /* skip invalid */ }
     }
 
     return apiResponse({ marketPrice, sources: sourceLinks });
