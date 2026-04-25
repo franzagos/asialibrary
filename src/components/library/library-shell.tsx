@@ -14,18 +14,19 @@ interface Category {
 
 interface Props {
   categories: Category[];
+  tags: string[];
   isAdmin: boolean;
   children: React.ReactNode;
 }
 
-export function LibraryShell({ categories, isAdmin, children }: Props) {
+export function LibraryShell({ categories, tags, isAdmin, children }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-60 shrink-0 flex-col">
-        <LibrarySidebar categories={categories} isAdmin={isAdmin} />
+        <LibrarySidebar categories={categories} tags={tags} isAdmin={isAdmin} />
       </aside>
 
       {/* Mobile header + sheet */}
@@ -40,6 +41,7 @@ export function LibraryShell({ categories, isAdmin, children }: Props) {
             <SheetContent side="left" className="p-0 w-60">
               <LibrarySidebar
                 categories={categories}
+                tags={tags}
                 isAdmin={isAdmin}
                 onClose={() => setOpen(false)}
               />
