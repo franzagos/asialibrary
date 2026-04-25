@@ -7,7 +7,7 @@ import {
   requireApiAuth,
   parseBody,
 } from "@/lib/api-utils";
-import { eq, and, ilike, inArray, sql } from "drizzle-orm";
+import { eq, and, ilike, inArray, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { upload } from "@/lib/storage";
 
@@ -40,11 +40,15 @@ export async function GET(req: Request) {
   const categoryId = url.searchParams.get("categoryId");
   const tag = url.searchParams.get("tag");
   const q = url.searchParams.get("q");
+  const purchaseStatus = url.searchParams.get("purchaseStatus");
+  const excludeStatus = url.searchParams.get("excludeStatus");
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50"), 50);
   const offset = parseInt(url.searchParams.get("offset") ?? "0");
 
   const conditions = [eq(book.userId, session.user.id)];
   if (categoryId) conditions.push(eq(book.categoryId, categoryId));
+  if (purchaseStatus) conditions.push(eq(book.purchaseStatus, purchaseStatus as "owned" | "wishlist" | "lent" | "sold"));
+  if (excludeStatus) conditions.push(ne(book.purchaseStatus, excludeStatus as "owned" | "wishlist" | "lent" | "sold"));
   if (q) conditions.push(ilike(book.title, `%${q}%`));
 
   let bookIds: string[] | null = null;

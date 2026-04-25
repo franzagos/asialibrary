@@ -35,6 +35,7 @@ export function LibraryView({ initialFilters, categories }: Props) {
     return "grid";
   });
 
+  const [tab, setTab] = useState<"library" | "wishlist">("library");
   const [books, setBooks] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -51,6 +52,11 @@ export function LibraryView({ initialFilters, categories }: Props) {
     if (categoryId) params.set("categoryId", categoryId);
     if (tag) params.set("tag", tag);
     if (q) params.set("q", q);
+    if (tab === "wishlist") {
+      params.set("purchaseStatus", "wishlist");
+    } else {
+      params.set("excludeStatus", "wishlist");
+    }
 
     const res = await fetch(`/api/books?${params}`);
     if (res.ok) {
@@ -59,7 +65,7 @@ export function LibraryView({ initialFilters, categories }: Props) {
       setTotal(data.total);
     }
     setLoading(false);
-  }, [categoryId, tag, q]);
+  }, [categoryId, tag, q, tab]);
 
   useEffect(() => { fetchBooks(); }, [fetchBooks]);
 
@@ -133,6 +139,22 @@ export function LibraryView({ initialFilters, categories }: Props) {
             </Link>
           </Button>
         </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-border">
+        <button
+          onClick={() => setTab("library")}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${tab === "library" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+        >
+          Libreria
+        </button>
+        <button
+          onClick={() => setTab("wishlist")}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${tab === "wishlist" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+        >
+          Lista dei desideri
+        </button>
       </div>
 
       {/* Search + view toggle */}

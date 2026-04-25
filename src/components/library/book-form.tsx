@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X, Search, Loader2, ChevronDown, ExternalLink } from "lucide-react";
+import { X, Search, Loader2, ChevronDown, ExternalLink, Plus, Check } from "lucide-react";
 import { toast } from "sonner";
 
 interface Category {
@@ -71,6 +71,10 @@ export function BookForm({ initialData, categories, onSubmit, submitLabel = "Sal
   const [categoryId, setCategoryId] = useState(initialData?.categoryId ?? "");
   const [tags, setTags] = useState<string[]>(initialData?.tags ?? []);
   const [tagInput, setTagInput] = useState("");
+  const [localCategories, setLocalCategories] = useState(categories);
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [savingCategory, setSavingCategory] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [searchingPrice, setSearchingPrice] = useState(false);
   const [priceSources, setPriceSources] = useState<{ url: string }[]>([]);
@@ -84,6 +88,29 @@ export function BookForm({ initialData, categories, onSubmit, submitLabel = "Sal
 
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(tagInput); }
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    setSavingCategory(true);
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newCategoryName.trim() }),
+      });
+      if (!res.ok) throw new Error();
+      const created = await res.json();
+      setLocalCategories((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      setCategoryId(created.id);
+      setNewCategoryName("");
+      setAddingCategory(false);
+      toast.success(`Categoria "${created.name}" aggiunta`);
+    } catch {
+      toast.error("Errore durante la creazione della categoria");
+    } finally {
+      setSavingCategory(false);
+    }
   };
 
   const handleSearchPrice = async () => {
@@ -148,14 +175,40 @@ export function BookForm({ initialData, categories, onSubmit, submitLabel = "Sal
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="category">Categoria</Label>
-          <Select value={categoryId || "none"} onValueChange={(v) => setCategoryId(v === "none" ? "" : v)}>
-            <SelectTrigger><SelectValue placeholder="Seleziona categoria" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Nessuna categoria</SelectItem>
-              {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="category">Categoria</Label>
+            <button
+              type="button"
+              onClick={() => { setAddingCategory((v) => !v); setNewCategoryName(""); }}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Plus className="w-3 h-3" />
+              Nuova
+            </button>
+          </div>
+          {addingCategory ? (
+            <div className="flex gap-2">
+              <Input
+                autoFocus
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddCategory(); } if (e.key === "Escape") setAddingCategory(false); }}
+                placeholder="Nome categoria"
+                className="flex-1"
+              />
+              <Button type="button" size="icon" variant="outline" onClick={handleAddCategory} disabled={savingCategory || !newCategoryName.trim()}>
+                {savingCategory ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              </Button>
+            </div>
+          ) : (
+            <Select value={categoryId || "none"} onValueChange={(v) => setCategoryId(v === "none" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="Seleziona categoria" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nessuna categoria</SelectItem>
+                {localCategories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <div className="space-y-1.5">

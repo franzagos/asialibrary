@@ -99,8 +99,9 @@ export const verification = pgTable("verification", {
 
 export const category = pgTable("category", {
   id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
+  slug: text("slug").notNull(),
 });
 
 export const purchaseStatusEnum = pgEnum("purchase_status", [
