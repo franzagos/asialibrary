@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X, Search, Loader2 } from "lucide-react";
+import { X, Search, Loader2, ChevronDown, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface Category {
@@ -71,6 +71,8 @@ export function BookForm({ initialData, categories, onSubmit, submitLabel = "Sal
   const [tagInput, setTagInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [searchingPrice, setSearchingPrice] = useState(false);
+  const [priceSources, setPriceSources] = useState<{ url: string }[]>([]);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
 
   const addTag = (val: string) => {
     const trimmed = val.trim().toLowerCase();
@@ -95,6 +97,8 @@ export function BookForm({ initialData, categories, onSubmit, submitLabel = "Sal
       const data = await res.json();
       if (data.marketPrice != null) {
         setMarketPrice(String(data.marketPrice));
+        setPriceSources(data.sources ?? []);
+        setSourcesOpen(false);
         toast.success(`Prezzo trovato: €${data.marketPrice}`);
       } else {
         toast.info("Prezzo non trovato online");
@@ -185,6 +189,35 @@ export function BookForm({ initialData, categories, onSubmit, submitLabel = "Sal
               <span className="ml-1.5">Cerca prezzo</span>
             </Button>
           </div>
+          {priceSources.length > 0 && (
+            <div className="mt-1.5">
+              <button
+                type="button"
+                onClick={() => setSourcesOpen((o) => !o)}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronDown className={`w-3 h-3 transition-transform ${sourcesOpen ? "rotate-180" : ""}`} />
+                Fonti ({priceSources.length})
+              </button>
+              {sourcesOpen && (
+                <ul className="mt-1.5 space-y-1 pl-1 border-l-2 border-border">
+                  {priceSources.map((s, i) => (
+                    <li key={i}>
+                      <a
+                        href={s.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs text-primary hover:underline break-all"
+                      >
+                        <ExternalLink className="w-3 h-3 shrink-0" />
+                        {new URL(s.url).hostname}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="space-y-1.5">

@@ -14,10 +14,9 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BookForm } from "./book-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Pencil, Trash2, Search, Loader2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Search, Loader2, ExternalLink, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 interface Category {
@@ -60,6 +59,7 @@ export function BookDetail({ book, categories }: { book: Book; categories: Categ
   const [currentBook, setCurrentBook] = useState(book);
   const [searchingPrice, setSearchingPrice] = useState(false);
   const [priceSources, setPriceSources] = useState<{ url: string; title?: string }[]>([]);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
 
   const categoryName = currentBook.categoryId
     ? categories.find((c) => c.id === currentBook.categoryId)?.name
@@ -100,6 +100,7 @@ export function BookDetail({ book, categories }: { book: Book; categories: Categ
           const u = await updated.json();
           setCurrentBook({ ...currentBook, marketPrice: u.marketPrice });
           setPriceSources(data.sources ?? []);
+          setSourcesOpen(false);
           toast.success(`Prezzo aggiornato: €${data.marketPrice}`);
         }
       } else {
@@ -251,32 +252,13 @@ export function BookDetail({ book, categories }: { book: Book; categories: Categ
                 Cerca
               </button>
               {priceSources.length > 0 && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md px-2 py-0.5 transition-colors">
-                      <ExternalLink className="w-3 h-3" />
-                      Fonti ({priceSources.length})
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 p-3" align="start">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Fonti del prezzo</p>
-                    <ul className="space-y-1.5">
-                      {priceSources.map((s, i) => (
-                        <li key={i}>
-                          <a
-                            href={s.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-start gap-1.5 text-xs text-primary hover:underline break-all"
-                          >
-                            <ExternalLink className="w-3 h-3 mt-0.5 shrink-0" />
-                            {s.title ?? new URL(s.url).hostname}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </PopoverContent>
-                </Popover>
+                <button
+                  onClick={() => setSourcesOpen((o) => !o)}
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md px-2 py-0.5 transition-colors"
+                >
+                  <ChevronDown className={`w-3 h-3 transition-transform ${sourcesOpen ? "rotate-180" : ""}`} />
+                  Fonti ({priceSources.length})
+                </button>
               )}
             </dd>
             {currentBook.purchaseLocation && (
@@ -286,6 +268,24 @@ export function BookDetail({ book, categories }: { book: Book; categories: Categ
               </>
             )}
           </dl>
+
+          {sourcesOpen && priceSources.length > 0 && (
+            <ul className="space-y-1 pl-1 border-l-2 border-border -mt-2">
+              {priceSources.map((s, i) => (
+                <li key={i}>
+                  <a
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs text-primary hover:underline break-all"
+                  >
+                    <ExternalLink className="w-3 h-3 shrink-0" />
+                    {s.title ?? (() => { try { return new URL(s.url).hostname; } catch { return s.url; } })()}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
 
           {(currentBook.descriptionIt || currentBook.descriptionEn || currentBook.descriptionRu) && (
             <div>
