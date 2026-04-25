@@ -75,7 +75,7 @@ export async function upload(
   const pathname = folder ? `${folder}/${safe}` : safe;
 
   if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const blob = await put(pathname, buffer, { access: "public" });
+    const blob = await put(pathname, buffer, { access: "public", addRandomSuffix: true });
     return { url: blob.url, pathname: blob.pathname };
   }
 
