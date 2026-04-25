@@ -35,6 +35,7 @@ interface Book {
   descriptionEn?: string | null;
   descriptionRu?: string | null;
   marketPrice?: string | null;
+  pricePaid?: string | null;
   coverUrl?: string | null;
   personalNotes?: string | null;
   purchaseStatus?: string | null;
@@ -261,6 +262,12 @@ export function BookDetail({ book, categories }: { book: Book; categories: Categ
                 </button>
               )}
             </dd>
+            {currentBook.pricePaid && (
+              <>
+                <dt className="text-muted-foreground">Prezzo pagato</dt>
+                <dd className="font-medium">€{parseFloat(currentBook.pricePaid).toFixed(2)}</dd>
+              </>
+            )}
             {currentBook.purchaseLocation && (
               <>
                 <dt className="text-muted-foreground">Luogo acquisto</dt>

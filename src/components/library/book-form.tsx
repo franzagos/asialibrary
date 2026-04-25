@@ -31,6 +31,7 @@ interface InitialData {
   descriptionEn?: string | null;
   descriptionRu?: string | null;
   marketPrice?: string | null;
+  pricePaid?: string | null;
   personalNotes?: string | null;
   purchaseStatus?: string | null;
   purchaseLocation?: string | null;
@@ -63,6 +64,7 @@ export function BookForm({ initialData, categories, onSubmit, submitLabel = "Sal
   const [descriptionEn, setDescriptionEn] = useState(initialData?.descriptionEn ?? "");
   const [descriptionRu, setDescriptionRu] = useState(initialData?.descriptionRu ?? "");
   const [marketPrice, setMarketPrice] = useState(initialData?.marketPrice ?? "");
+  const [pricePaid, setPricePaid] = useState(initialData?.pricePaid ?? "");
   const [personalNotes, setPersonalNotes] = useState(initialData?.personalNotes ?? "");
   const [purchaseStatus, setPurchaseStatus] = useState(initialData?.purchaseStatus ?? "owned");
   const [purchaseLocation, setPurchaseLocation] = useState(initialData?.purchaseLocation ?? "");
@@ -122,6 +124,7 @@ export function BookForm({ initialData, categories, onSubmit, submitLabel = "Sal
     if (descriptionEn) fd.append("descriptionEn", descriptionEn);
     if (descriptionRu) fd.append("descriptionRu", descriptionRu);
     if (marketPrice) fd.append("marketPrice", marketPrice);
+    if (pricePaid) fd.append("pricePaid", pricePaid);
     if (personalNotes) fd.append("personalNotes", personalNotes);
     if (purchaseStatus) fd.append("purchaseStatus", purchaseStatus);
     if (purchaseLocation) fd.append("purchaseLocation", purchaseLocation);
@@ -163,6 +166,18 @@ export function BookForm({ initialData, categories, onSubmit, submitLabel = "Sal
         <div className="space-y-1.5">
           <Label htmlFor="edition">Edizione</Label>
           <Input id="edition" value={edition} onChange={(e) => setEdition(e.target.value)} placeholder="Es. Prima edizione" />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="pricePaid">Prezzo pagato (€)</Label>
+          <Input
+            id="pricePaid"
+            type="number"
+            step="0.01"
+            value={pricePaid}
+            onChange={(e) => setPricePaid(e.target.value)}
+            placeholder="Es. 18.00"
+          />
         </div>
 
         {/* Price with manual search */}

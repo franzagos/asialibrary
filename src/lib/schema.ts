@@ -128,6 +128,7 @@ export const book = pgTable(
     descriptionEn: text("description_en"),
     descriptionRu: text("description_ru"),
     marketPrice: numeric("market_price", { precision: 10, scale: 2 }),
+    pricePaid: numeric("price_paid", { precision: 10, scale: 2 }),
     coverUrl: text("cover_url"),
     personalNotes: text("personal_notes"),
     purchaseStatus: purchaseStatusEnum("purchase_status").default("owned"),
