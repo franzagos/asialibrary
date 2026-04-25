@@ -17,7 +17,7 @@ function parseJSON(text: string): Record<string, unknown> {
 }
 
 export async function POST(req: Request) {
-  const limited = await applyRateLimit("books-identify", { maxRequests: 10, windowSeconds: 60 });
+  const limited = await applyRateLimit("books-identify", { maxRequests: 40, windowSeconds: 60 });
   if (limited) return limited;
 
   const { error } = await requireApiAuth();

@@ -132,6 +132,12 @@ export function LibraryView({ initialFilters, categories }: Props) {
             <Download className="w-4 h-4 mr-1.5" />
             Esporta CSV
           </Button>
+          <Button asChild variant="outline" size="sm" className="hidden sm:flex">
+            <Link href="/library/bulk-upload">
+              <Plus className="w-4 h-4 mr-1.5" />
+              Multiplo
+            </Link>
+          </Button>
           <Button asChild size="sm">
             <Link href="/library/upload">
               <Plus className="w-4 h-4 mr-1.5" />
