@@ -41,6 +41,8 @@ https://example.com/listing2
 Replace the example values with the actual price and actual URLs of the pages you found.`,
     });
 
+    console.log("[price-search] full response:\n", text);
+
     // Extract price
     const priceMatch = text.match(/PRICE_EUR:\s*([\d]+(?:[.,]\d+)?)/i);
     let marketPrice: number | null = null;
