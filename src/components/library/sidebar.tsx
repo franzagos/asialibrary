@@ -87,14 +87,24 @@ export function LibrarySidebar({ categories, isAdmin, onClose }: Props) {
       {/* Bottom */}
       <div className="px-3 py-3 border-t border-border space-y-0.5">
         {isAdmin && (
-          <Link
-            href="/admin/invites"
-            onClick={onClose}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          >
-            <Settings className="w-4 h-4" />
-            Gestione inviti
-          </Link>
+          <>
+            <Link
+              href="/admin/categories"
+              onClick={onClose}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+              Categorie
+            </Link>
+            <Link
+              href="/admin/invites"
+              onClick={onClose}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+              Inviti
+            </Link>
+          </>
         )}
         <button
           onClick={handleSignOut}
