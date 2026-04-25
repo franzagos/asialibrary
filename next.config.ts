@@ -22,6 +22,14 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.public.blob.vercel-storage.com",
+      },
+    ],
+  },
   async headers() {
     const commonHeaders = [
       // Prevent MIME type sniffing

@@ -120,9 +120,15 @@ export async function POST(req: Request) {
     const coverFile = formData.get("cover") as File | null;
 
     if (coverFile && coverFile.size > 0) {
-      const buffer = Buffer.from(await coverFile.arrayBuffer());
-      const result = await upload(buffer, coverFile.name, "covers");
-      coverUrl = result.url;
+      try {
+        const buffer = Buffer.from(await coverFile.arrayBuffer());
+        const result = await upload(buffer, coverFile.name, "covers");
+        coverUrl = result.url;
+      } catch (uploadErr) {
+        const msg = uploadErr instanceof Error ? uploadErr.message : String(uploadErr);
+        console.error("[books POST] upload error:", msg);
+        return apiError(`Upload failed: ${msg}`, 500);
+      }
     }
 
     const g = (key: string) => formData.get(key) ?? undefined;
@@ -158,25 +164,31 @@ export async function POST(req: Request) {
 
   const { tags, ...bookData } = data;
 
-  const [newBook] = await db.transaction(async (tx) => {
-    const inserted = await tx
-      .insert(book)
-      .values({
-        ...bookData,
-        coverUrl,
-        userId: session.user.id,
-        marketPrice: bookData.marketPrice ?? undefined,
-      })
-      .returning();
+  try {
+    const [newBook] = await db.transaction(async (tx) => {
+      const inserted = await tx
+        .insert(book)
+        .values({
+          ...bookData,
+          coverUrl,
+          userId: session.user.id,
+          marketPrice: bookData.marketPrice ?? undefined,
+        })
+        .returning();
 
-    if (tags && tags.length > 0) {
-      await tx
-        .insert(bookTag)
-        .values(tags.map((tag) => ({ bookId: inserted[0].id, tag })));
-    }
+      if (tags && tags.length > 0) {
+        await tx
+          .insert(bookTag)
+          .values(tags.map((tag) => ({ bookId: inserted[0].id, tag })));
+      }
 
-    return inserted;
-  });
+      return inserted;
+    });
 
-  return apiResponse(newBook, 201);
+    return apiResponse(newBook, 201);
+  } catch (e) {
+    const msg = e instanceof Error ? `${e.message} | cause: ${(e as {cause?: unknown}).cause instanceof Error ? (e as {cause?: unknown}).cause : ""}` : String(e);
+    console.error("[books POST]", msg);
+    return apiError(msg, 500);
+  }
 }
