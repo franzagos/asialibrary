@@ -7,7 +7,7 @@ import {
   requireApiAuth,
   parseBody,
 } from "@/lib/api-utils";
-import { eq, and, ilike, inArray, ne, sql } from "drizzle-orm";
+import { eq, and, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { upload } from "@/lib/storage";
 
@@ -49,7 +49,27 @@ export async function GET(req: Request) {
   if (categoryId) conditions.push(eq(book.categoryId, categoryId));
   if (purchaseStatus) conditions.push(eq(book.purchaseStatus, purchaseStatus as "owned" | "wishlist" | "lent" | "sold"));
   if (excludeStatus) conditions.push(ne(book.purchaseStatus, excludeStatus as "owned" | "wishlist" | "lent" | "sold"));
-  if (q) conditions.push(ilike(book.title, `%${q}%`));
+  // Full-text search across all relevant fields + tags
+  if (q) {
+    const like = `%${q}%`;
+    const tagMatchIds = await db
+      .select({ bookId: bookTag.bookId })
+      .from(bookTag)
+      .where(ilike(bookTag.tag, like));
+    const tagIds = tagMatchIds.map((r) => r.bookId);
+
+    const textCondition = or(
+      ilike(book.title, like),
+      ilike(book.author, like),
+      ilike(book.descriptionIt, like),
+      ilike(book.descriptionEn, like),
+      ilike(book.descriptionRu, like),
+      ilike(book.personalNotes, like),
+      ilike(book.purchaseLocation, like),
+      ...(tagIds.length > 0 ? [inArray(book.id, tagIds)] : []),
+    );
+    conditions.push(textCondition!);
+  }
 
   let bookIds: string[] | null = null;
   if (tag) {

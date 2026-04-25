@@ -162,7 +162,7 @@ export function LibraryView({ initialFilters, categories }: Props) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Cerca per titolo..."
+            placeholder="Cerca per titolo, autore, tag, luogo..."
             value={search}
             onChange={(e) => updateSearch(e.target.value)}
             className="pl-9"
