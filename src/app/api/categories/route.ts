@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { category } from "@/lib/schema";
-import { apiResponse, apiError, applyRateLimit, requireApiAuth, parseBody } from "@/lib/api-utils";
+import { apiResponse, applyRateLimit, requireApiAuth, parseBody } from "@/lib/api-utils";
 import { eq, and, or, isNull } from "drizzle-orm";
 import { z } from "zod";
 
@@ -26,7 +26,6 @@ export async function POST(req: Request) {
 
   const { session, error } = await requireApiAuth();
   if (error) return error;
-  if (session.user.email !== process.env.ADMIN_EMAIL) return apiError("Forbidden", 403);
 
   const { data, error: parseErr } = await parseBody(req, z.object({ name: z.string().min(1) }));
   if (parseErr) return parseErr;
@@ -43,7 +42,6 @@ export async function DELETE(req: Request) {
 
   const { session, error } = await requireApiAuth();
   if (error) return error;
-  if (session.user.email !== process.env.ADMIN_EMAIL) return apiError("Forbidden", 403);
 
   const { data, error: parseErr } = await parseBody(req, z.object({ id: z.string().uuid() }));
   if (parseErr) return parseErr;
