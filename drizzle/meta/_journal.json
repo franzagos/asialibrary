@@ -30,5 +30,12 @@
       "tag": "0003_price_paid",
       "breakpoints": true
     }
+    ,{
+      "idx": 4,
+      "version": "7",
+      "when": 1745660000000,
+      "tag": "0004_category_user_id",
+      "breakpoints": true
+    }
   ]
 }
